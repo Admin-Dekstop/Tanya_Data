@@ -70,27 +70,29 @@
         <div class="flex-1 flex flex-col overflow-hidden main-content">
             <!-- Top bar -->
             <header class="flex justify-between items-center p-4 shadow-md card border-t-0 border-x-0 rounded-none">
-                <button id="menu-toggle-btn" class="text-secondary hover:text-primary"><i data-lucide="menu" class="h-6 w-6"></i></button>
+                <button id="menu-toggle-btn" class="text-secondary hover:text-primary lg:hidden">
+                    <i data-lucide="menu" class="h-6 w-6"></i>
+                </button>
                 <div id="page-title" class="font-bold text-lg">Dasbor Utama</div>
                 <button id="theme-toggle-btn" class="text-secondary hover:text-primary"><i data-lucide="sun" class="h-6 w-6"></i></button>
             </header>
 
             <!-- Content Area -->
-            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-6 md:p-8">
+            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
                 <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page-content">
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-6">Ringkasan Analitik Keseluruhan</h1>
-                    <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
+                    <h1 class="text-xl md:text-2xl lg:text-3xl font-extrabold text-slate-900 mb-6">Ringkasan Analitik Keseluruhan</h1>
+                    <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6"></div>
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-                        <div class="lg:col-span-3 card p-6 rounded-xl"><h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i data-lucide="users-2" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
-                        <div class="lg:col-span-2 card p-6 rounded-xl"><h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Alasan Keterlambatan</h3><div id="chart-by-reason-container" class="h-80"></div></div>
+                        <div class="lg:col-span-3 card p-4 md:p-6 rounded-xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="users-2" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
+                        <div class="lg:col-span-2 card p-4 md:p-6 rounded-xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Alasan Keterlambatan</h3><div id="chart-by-reason-container" class="h-80"></div></div>
                     </div>
                 </div>
 
                 <!-- Data Explorer Page -->
                 <div id="page-data_explorer" class="page-content hidden">
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-6">Eksplorasi & Filter Data Terperinci</h1>
-                    <div class="card p-6 rounded-xl">
+                    <h1 class="text-xl md:text-2xl lg:text-3xl font-extrabold text-slate-900 mb-6">Eksplorasi & Filter Data Terperinci</h1>
+                    <div class="card p-4 md:p-6 rounded-xl">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                             <div>
                                 <label for="filter-start-date" class="text-sm font-medium text-secondary">Dari Tanggal</label>
@@ -109,12 +111,12 @@
                                 <input type="text" id="filter-name" placeholder="Cari nama..." class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
                             </div>
                         </div>
-                        <div class="flex justify-end gap-2 mb-6">
-                            <button id="reset-filter-btn" class="flex items-center gap-2 bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">
+                        <div class="flex flex-col sm:flex-row justify-end gap-2 mb-6">
+                            <button id="reset-filter-btn" class="flex items-center justify-center gap-2 bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">
                                 <i data-lucide="rotate-ccw"></i> Reset
                             </button>
-                            <button id="download-filtered-btn" class="flex items-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
-                                <i data-lucide="download"></i> Unduh Hasil Filter
+                            <button id="download-filtered-btn" class="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
+                                <i data-lucide="download"></i> Unduh Data
                             </button>
                         </div>
                         <div class="overflow-x-auto">
@@ -417,7 +419,7 @@ const app = {
         this.dom.html.dataset.theme = this.state.theme;
         this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
     },
-
+    
     showDownloadModal() {
         if (this.state.data.filtered.length === 0) {
             this.showToast('Tidak ada data untuk diunduh.', 3000);
