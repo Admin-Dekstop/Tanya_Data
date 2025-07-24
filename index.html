@@ -27,24 +27,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        /* Desain Ulang Sistem Tema dan Tampilan
+          - Palet warna baru yang lebih modern dan profesional.
+          - Peningkatan kontras untuk keterbacaan yang lebih baik.
+          - Efek transisi yang halus untuk semua elemen.
+        */
         :root {
             --bg-primary: #ffffff;
             --bg-secondary: #f8fafc;
             --bg-sidebar: #0f172a;
             --text-primary: #0f172a;
             --text-secondary: #64748b;
-            --text-on-sidebar: #cbd5e1;
+            --text-on-sidebar: #e2e8f0;
             --border-color: #e2e8f0;
             --accent-color: #2563eb;
             --accent-color-hover: #1d4ed8;
         }
         [data-theme='dark'] {
             --bg-primary: #1e293b;
-            --bg-secondary: #020617;
+            --bg-secondary: #0f172a;
             --bg-sidebar: #020617;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
-            --text-on-sidebar: #94a3b8;
+            --text-on-sidebar: #e2e8f0;
             --border-color: #334155;
             --accent-color: #3b82f6;
             --accent-color-hover: #2563eb;
@@ -60,12 +65,12 @@
         .card { 
             background-color: var(--bg-primary); 
             border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
         }
         .card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
         }
         .menu-item.active { 
             background-color: var(--accent-color); 
@@ -76,67 +81,81 @@
         .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li, .prose-dark ul, .prose-dark table, .prose-dark th, .prose-dark td { color: var(--text-primary); }
         .prose table { width: 100%; } .prose th, .prose td { border: 1px solid var(--border-color); padding: 8px; }
         #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, -2rem); }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.6); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
         #data-table tbody tr:hover { background-color: var(--bg-secondary); }
-        .btn-primary {
-            background-color: var(--accent-color);
-            color: white;
-            font-weight: 600;
-            transition: background-color 0.2s;
+
+        /* Navigasi Bawah untuk Mobile */
+        .bottom-nav {
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
-        .btn-primary:hover {
-            background-color: var(--accent-color-hover);
+        .bottom-nav-item.active {
+            color: var(--accent-color);
+        }
+        .bottom-nav-item.active .nav-indicator {
+            width: 24px;
+            height: 4px;
+            background-color: var(--accent-color);
+            border-radius: 99px;
+            position: absolute;
+            bottom: 2px;
+            transition: all 0.3s ease;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <div class="relative min-h-screen lg:flex">
+    <div class="relative min-h-screen flex">
         <!-- Sidebar untuk Desktop -->
-        <aside id="sidebar" class="sidebar w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50">
+        <aside id="sidebar" class="sidebar w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 hidden lg:flex">
             <a href="#" id="logo-btn" class="flex items-center justify-center h-20 border-b cursor-pointer" style="border-color: #334155;">
                 <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-400"></i>
-                <h1 class="text-xl font-bold ml-2 text-white">Dasbor Analitik</h1>
+                <h1 class="text-xl font-bold ml-2 tracking-wide">Analitik MAX</h1>
             </a>
             <nav id="main-nav" class="flex-1 px-4 py-6 space-y-2">
-                <a href="#" data-page="dashboard" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Dasbor</a>
-                <a href="#" data-page="data_explorer" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="search-check" class="mr-3"></i>Eksplor Data</a>
-                <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Asisten AI</a>
+                <a href="#" data-page="dashboard" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Ringkasan</a>
+                <a href="#" data-page="data_explorer" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="search-check" class="mr-3"></i>Penjelajah Data</a>
+                <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Asisten AI</a>
             </nav>
         </aside>
 
         <!-- Main Content Wrapper -->
         <div class="flex-1 flex flex-col overflow-hidden main-content-wrapper">
             <!-- Top bar -->
-            <header class="flex justify-between items-center p-4 shadow-md card border-t-0 border-x-0 rounded-none z-30">
+            <header class="flex justify-between items-center p-4 h-20 bg-primary border-b" style="border-color: var(--border-color);">
                 <div class="flex items-center">
-                    <!-- Tombol menu hamburger untuk mobile -->
+                    <!-- Tombol Menu untuk Mobile (Sidebar) -->
                     <button id="menu-toggle-btn" class="text-secondary hover:text-primary lg:hidden mr-4">
                         <i data-lucide="menu" class="h-7 w-7"></i>
                     </button>
-                    <h1 id="page-title" class="font-bold text-xl">Dasbor</h1>
+                    <h1 id="page-title" class="font-bold text-2xl tracking-tight">Ringkasan Analitik</h1>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-secondary hidden sm:block" id="current-date"></span>
-                    <button id="theme-toggle-btn" class="text-secondary hover:text-primary"><i data-lucide="sun" class="h-6 w-6"></i></button>
+                    <button id="theme-toggle-btn" class="text-secondary hover:text-primary p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700">
+                        <i data-lucide="sun" class="h-6 w-6"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        AK
+                    </div>
                 </div>
             </header>
 
             <!-- Content Area -->
-            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
-                <!-- Halaman Dasbor -->
+            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
+                <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page-content">
-                    <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6"></div>
+                    <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-                        <div class="lg:col-span-3 card p-4 md:p-6 rounded-xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
-                        <div class="lg:col-span-2 card p-4 md:p-6 rounded-xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Distribusi Alasan</h3><div id="chart-by-reason-container" class="h-80"></div></div>
+                        <div class="lg:col-span-3 card p-4 md:p-6 rounded-2xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="users-2" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
+                        <div class="lg:col-span-2 card p-4 md:p-6 rounded-2xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Distribusi Alasan</h3><div id="chart-by-reason-container" class="h-80"></div></div>
                     </div>
                 </div>
 
-                <!-- Halaman Eksplorasi Data -->
+                <!-- Data Explorer Page -->
                 <div id="page-data_explorer" class="page-content hidden">
-                    <div class="card p-4 md:p-6 rounded-xl">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
+                    <div class="card p-4 md:p-6 rounded-2xl">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                             <div>
                                 <label for="filter-start-date" class="text-sm font-medium text-secondary">Dari Tanggal</label>
                                 <input type="date" id="filter-start-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
@@ -146,20 +165,20 @@
                                 <input type="date" id="filter-end-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
                             </div>
                             <div>
-                                <label for="filter-class" class="text-sm font-medium text-secondary">Kelas</label>
+                                <label for="filter-class" class="text-sm font-medium text-secondary">Filter Kelas</label>
                                 <select id="filter-class" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);"></select>
                             </div>
                             <div>
-                                <label for="filter-name" class="text-sm font-medium text-secondary">Nama Siswa</label>
-                                <input type="text" id="filter-name" placeholder="Cari nama..." class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                                <label for="filter-name" class="text-sm font-medium text-secondary">Cari Nama Siswa</label>
+                                <input type="text" id="filter-name" placeholder="Ketik nama..." class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
                             </div>
                         </div>
                         <div class="flex flex-col sm:flex-row justify-end gap-3 mb-6">
-                            <button id="reset-filter-btn" class="flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-600 dark:text-slate-100 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-all">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+                            <button id="reset-filter-btn" class="flex items-center justify-center gap-2 bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Filter
                             </button>
                             <button id="download-filtered-btn" class="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
-                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Data
+                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Laporan
                             </button>
                         </div>
                         <div class="overflow-x-auto">
@@ -171,51 +190,72 @@
                     </div>
                 </div>
 
-                <!-- Halaman Analis AI -->
+                <!-- AI Analyst Page -->
                 <div id="page-ai_analyst" class="page-content hidden h-full">
-                    <div class="card rounded-xl flex flex-col h-full">
-                        <div class="p-4 border-b flex items-center gap-2" style="border-color: var(--border-color);"><i data-lucide="bot" class="text-purple-400"></i><h2 class="text-xl font-bold">Asisten AI Gemini</h2></div>
+                    <div class="card rounded-2xl flex flex-col h-full overflow-hidden">
+                        <div class="p-4 border-b flex items-center gap-3" style="border-color: var(--border-color);"><i data-lucide="bot" class="text-purple-400 w-8 h-8"></i><h2 class="text-xl font-bold">Tanya Asisten AI</h2></div>
                         <div id="chat-messages" class="flex-grow p-4 overflow-y-auto"></div>
                         <div class="p-4 border-t" style="border-color: var(--border-color);">
                             <div class="flex items-center">
-                                <input type="text" id="chat-input" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 bg-transparent" style="border-color: var(--border-color); --tw-ring-color: var(--accent-color);" placeholder="Contoh: Bandingkan tren kelas 10A dan 11B...">
-                                <button id="send-button" class="btn-primary p-2.5 rounded-r-lg flex items-center justify-center">
-                                    <i data-lucide="send" class="h-5 w-5"></i>
+                                <input type="text" id="chat-input" class="flex-grow border rounded-l-lg p-3 focus:outline-none focus:ring-2 bg-transparent" style="border-color: var(--border-color); --tw-ring-color: var(--accent-color);" placeholder="Contoh: Bandingkan tren kelas 10A dan 11B...">
+                                <button id="send-button" class="font-bold p-3 rounded-r-lg flex items-center justify-center text-white" style="background-color: var(--accent-color); hover:background-color: var(--accent-color-hover);">
+                                    <i data-lucide="send" class="h-6 w-6"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
+            
+            <!-- Padding di bawah untuk Navigasi Mobile -->
+            <div class="h-20 lg:hidden"></div>
         </div>
     </div>
     
-    <!-- Modal Unduh -->
-    <div id="download-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
-        <div class="card rounded-xl w-full max-w-md shadow-2xl animate-in fade-in-0 zoom-in-95">
-            <div class="p-4 border-b" style="border-color: var(--border-color);">
-                <h2 class="text-xl font-bold">Konfirmasi Unduhan</h2>
+    <!-- Navigasi Bawah untuk Mobile -->
+    <nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 h-20 flex justify-around items-center bottom-nav z-50">
+        <a href="#" data-page="dashboard" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full active">
+            <i data-lucide="layout-dashboard" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Ringkasan</span>
+            <div class="nav-indicator"></div>
+        </a>
+        <a href="#" data-page="data_explorer" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
+            <i data-lucide="search-check" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Penjelajah</span>
+            <div class="nav-indicator"></div>
+        </a>
+        <a href="#" data-page="ai_analyst" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
+            <i data-lucide="brain-circuit" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Asisten AI</span>
+            <div class="nav-indicator"></div>
+        </a>
+    </nav>
+    
+    <!-- Download Modal -->
+    <div id="download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="card rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="p-6 border-b" style="border-color: var(--border-color);">
+                <h2 class="text-xl font-bold">Konfirmasi Unduhan Laporan</h2>
             </div>
             <div class="p-6">
-                <label for="pdf-title-input" class="text-sm font-medium text-secondary">Judul Laporan (Kop)</label>
+                <label for="pdf-title-input" class="text-sm font-medium text-secondary">Judul Kop Laporan</label>
                 <input type="text" id="pdf-title-input" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
-                <p class="text-xs text-secondary mt-2">Judul ini akan digunakan sebagai kop surat pada file PDF Anda.</p>
+                <p class="text-xs text-secondary mt-2">Judul ini akan muncul di bagian atas dokumen PDF Anda.</p>
             </div>
-            <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
-                <button id="cancel-download-btn" class="bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-100 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-all">Batal</button>
+            <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-b-2xl">
+                <button id="cancel-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
                 <button id="confirm-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi & Unduh</button>
             </div>
         </div>
     </div>
 
-    <!-- Overlay Sidebar untuk mobile -->
+    <!-- Sidebar Overlay for mobile -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
-    <div id="toast" class="fixed bottom-0 left-1/2 py-2 px-5 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500"><p id="toast-message"></p></div>
+    <div id="toast" class="fixed bottom-5 left-1/2 py-3 px-6 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500 text-sm font-medium"><p id="toast-message"></p></div>
 
 <script>
 // --- SCRIPT START --- //
 
-// PENTING: Ganti dengan kredensial Anda yang sebenarnya.
 const GOOGLE_SHEETS_API_KEY = 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY';
 const SPREADSHEET_ID = '1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc';
 const GEMINI_API_KEY = 'AIzaSyDUIijYUqNa7zrQ_m3sC44-fopxuIs7eOA';
@@ -233,12 +273,12 @@ const app = {
         sidebar: document.getElementById('sidebar'),
         logoBtn: document.getElementById('logo-btn'),
         mainNav: document.getElementById('main-nav'),
+        bottomNav: document.getElementById('bottom-nav'),
         pages: document.querySelectorAll('.page-content'),
         menuToggleBtn: document.getElementById('menu-toggle-btn'),
         themeToggleBtn: document.getElementById('theme-toggle-btn'),
         sidebarOverlay: document.getElementById('sidebar-overlay'),
         pageTitle: document.getElementById('page-title'),
-        currentDate: document.getElementById('current-date'),
         containers: {
             kpi: document.getElementById('kpi-cards-container'),
             classChart: document.getElementById('chart-by-class-container'),
@@ -270,7 +310,6 @@ const app = {
     init() {
         this.loadTheme();
         this.setupEventListeners();
-        this.updateDate();
         
         if (GOOGLE_SHEETS_API_KEY.includes('GANTI_DENGAN') || SPREADSHEET_ID.includes('GANTI_DENGAN')) {
             this.showToast('Konfigurasi diperlukan. Harap edit kredensial di dalam kode.', 10000);
@@ -287,20 +326,17 @@ const app = {
         try {
             const RANGE = 'Sheet1!A:F';
             const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${GOOGLE_SHEETS_API_KEY}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error.message || 'Respons jaringan tidak OK');
-            }
+            if (!response.ok) throw new Error((await response.json()).error.message);
             
             const data = await response.json();
             const rows = data.values;
-            if (!rows || rows.length < 2) throw new Error('Data tidak valid atau kosong.');
+            if (!rows || rows.length < 2) throw new Error('Data tidak ditemukan di spreadsheet.');
 
             this.state.headers = rows[0];
             
             this.state.data.all = rows.slice(1).map(row => {
                 const obj = {};
-                this.state.headers.forEach((h, i) => obj[h.toLowerCase().replace(/ /g, '_')] = row[i] || '');
+                this.state.headers.forEach((h, i) => obj[h.toLowerCase()] = row[i] || '');
                 return obj;
             }).filter(row => row.tanggal);
 
@@ -327,14 +363,13 @@ const app = {
 
         const uniqueStudents = new Set(data.map(row => row.nama)).size;
         const topStudent = this.utils.getTopItems(data, 'nama');
-        const topClass = this.utils.getTopItems(data, 'kelas');
         
         this.state.analytics = {
             kpi: [
                 { title: 'Total Pelanggaran', value: data.length, icon: 'shield-alert', color: 'text-red-500' },
-                { title: 'Total Siswa Terlambat', value: uniqueStudents, icon: 'users', color: 'text-blue-500' },
-                { title: 'Pelanggar Teratas', value: topStudent[0]?.item || 'N/A', sub: `${topStudent[0]?.count || 0} kali`, icon: 'user-x', color: 'text-yellow-500' },
-                { title: 'Kelas Teratas', value: topClass[0]?.item || 'N/A', sub: `${topClass[0]?.count || 0} pelanggaran`, icon: 'award', color: 'text-green-500' }
+                { title: 'Siswa Terlambat', value: uniqueStudents, icon: 'users', color: 'text-blue-500' },
+                { title: 'Paling Sering Terlambat', value: topStudent[0]?.item || 'N/A', sub: `${topStudent[0]?.count || 0} kali`, icon: 'user-x', color: 'text-yellow-500' },
+                { title: 'Kelas Terbanyak', value: Object.keys(byClass).length > 0 ? Object.entries(byClass).sort((a,b) => b[1]-a[1])[0][0] : 'N/A', icon: 'award', color: 'text-green-500' }
             ],
             byClass,
             byReason,
@@ -352,18 +387,18 @@ const app = {
     },
     
     renderSkeletons() {
-        const skeletonCard = `<div class="card p-5 animate-pulse"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-4"></div><div class="h-10 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div>`;
+        const skeletonCard = `<div class="card p-5 animate-pulse rounded-2xl"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-4"></div><div class="h-10 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div>`;
         this.dom.containers.kpi.innerHTML = Array(4).fill(skeletonCard).join('');
-        const skeletonChart = `<div class="w-full h-full bg-gray-300 dark:bg-gray-700 rounded-lg animate-pulse"></div>`;
+        const skeletonChart = `<div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>`;
         this.dom.containers.classChart.innerHTML = skeletonChart;
         this.dom.containers.reasonChart.innerHTML = skeletonChart;
     },
 
     renderKpiCards() {
         this.dom.containers.kpi.innerHTML = this.state.analytics.kpi.map(kpi => `
-            <div class="card p-5 rounded-xl flex items-start gap-4">
+            <div class="card p-5 rounded-2xl flex items-start gap-4">
                 <div class="p-3 rounded-lg" style="background-color: var(--bg-secondary);"><i data-lucide="${kpi.icon}" class="h-8 w-8 ${kpi.color}"></i></div>
-                <div><p class="text-secondary font-medium">${kpi.title}</p><p class="text-2xl font-bold truncate">${kpi.value}</p>${kpi.sub ? `<p class="text-sm text-secondary">${kpi.sub}</p>` : ''}</div>
+                <div><p class="text-secondary font-medium">${kpi.title}</p><p class="text-3xl font-bold truncate">${kpi.value}</p>${kpi.sub ? `<p class="text-sm text-secondary">${kpi.sub}</p>` : ''}</div>
             </div>`).join('');
     },
 
@@ -373,7 +408,7 @@ const app = {
         if (this.charts.byClass) this.charts.byClass.destroy();
         const data = this.state.analytics.byClass;
         const sortedData = Object.entries(data).sort((a, b) => b[1] - a[1]);
-        this.charts.byClass = new Chart(container.firstElementChild.getContext('2d'), { type: 'bar', data: { labels: sortedData.map(d => d[0]), datasets: [{ label: 'Jumlah', data: sortedData.map(d => d[1]), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1 }] }, options: this.utils.getChartOptions() });
+        this.charts.byClass = new Chart(container.firstElementChild.getContext('2d'), { type: 'bar', data: { labels: sortedData.map(d => d[0]), datasets: [{ label: 'Jumlah Kasus', data: sortedData.map(d => d[1]), backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 5 }] }, options: this.utils.getChartOptions() });
     },
 
     renderReasonChart() {
@@ -381,7 +416,7 @@ const app = {
         container.innerHTML = '<canvas></canvas>';
         if (this.charts.byReason) this.charts.byReason.destroy();
         const data = this.state.analytics.byReason;
-        this.charts.byReason = new Chart(container.firstElementChild.getContext('2d'), { type: 'doughnut', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#3b82f6', '#ef4444', '#f97316', '#84cc16', '#a855f7', '#14b8a6'], borderColor: 'var(--bg-primary)', borderWidth: 4 }] }, options: { ...this.utils.getChartOptions(true), maintainAspectRatio: false } });
+        this.charts.byReason = new Chart(container.firstElementChild.getContext('2d'), { type: 'doughnut', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#3b82f6', '#ef4444', '#f97316', '#84cc16', '#a855f7', '#14b8a6'], borderColor: varGet('--bg-primary'), borderWidth: 4 }] }, options: { ...this.utils.getChartOptions(true), maintainAspectRatio: false } });
     },
 
     renderFilters() {
@@ -397,19 +432,23 @@ const app = {
             return;
         }
         container.innerHTML = this.state.data.filtered.map(row => 
-            `<tr class="border-b transition-colors" style="border-color: var(--border-color);">${this.state.headers.map(h => `<td class="px-4 py-3">${row[h.toLowerCase().replace(/ /g, '_')]}</td>`).join('')}</tr>`
+            `<tr class="border-b transition-colors" style="border-color: var(--border-color);">${this.state.headers.map(h => `<td class="px-4 py-3">${row[h.toLowerCase()]}</td>`).join('')}</tr>`
         ).join('');
     },
 
     setupEventListeners() {
         this.dom.logoBtn.addEventListener('click', (e) => { e.preventDefault(); this.loadData(); });
-        this.dom.mainNav.addEventListener('click', e => {
-            const menuItem = e.target.closest('.menu-item');
-            if (menuItem) {
+        
+        const handleNavClick = (e) => {
+            if (e.target.closest('[data-page]')) {
                 e.preventDefault();
-                this.switchPage(menuItem.dataset.page);
+                this.switchPage(e.target.closest('[data-page]').dataset.page);
             }
-        });
+        };
+
+        this.dom.mainNav.addEventListener('click', handleNavClick);
+        this.dom.bottomNav.addEventListener('click', handleNavClick);
+
         this.dom.menuToggleBtn.addEventListener('click', () => this.toggleSidebar());
         this.dom.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
         this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
@@ -426,9 +465,18 @@ const app = {
         this.dom.pages.forEach(p => p.classList.add('hidden'));
         document.getElementById(`page-${pageId}`).classList.remove('hidden');
         
-        document.querySelectorAll('.menu-item').forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
+        // Update Sidebar (Desktop)
+        document.querySelectorAll('#main-nav .menu-item').forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
         
-        this.dom.pageTitle.textContent = document.querySelector(`.menu-item[data-page="${pageId}"]`).innerText;
+        // Update Bottom Nav (Mobile)
+        document.querySelectorAll('#bottom-nav .bottom-nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
+
+        const pageTitles = {
+            dashboard: 'Ringkasan Analitik',
+            data_explorer: 'Penjelajah Data',
+            ai_analyst: 'Asisten AI'
+        };
+        this.dom.pageTitle.textContent = pageTitles[pageId] || 'Dasbor';
         
         if (window.innerWidth < 1024) {
             this.toggleSidebar(false);
@@ -447,7 +495,7 @@ const app = {
         localStorage.setItem('dashboardTheme', this.state.theme);
         this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
         this.utils.createIcons();
-        if (!this.state.isLoading) {
+        if(!this.state.isLoading) {
             this.renderClassChart();
             this.renderReasonChart();
         }
@@ -512,7 +560,7 @@ const app = {
         const doc = new jsPDF();
         doc.setFontSize(18); doc.text(customTitle, 14, 22);
         
-        const bodyData = this.state.data.filtered.map(row => this.state.headers.map(h => row[h.toLowerCase().replace(/ /g, '_')]));
+        const bodyData = this.state.data.filtered.map(row => this.state.headers.map(h => row[h.toLowerCase()]));
         doc.autoTable({ head: [this.state.headers], body: bodyData, startY: 30, theme: 'grid' });
         
         doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
@@ -534,14 +582,14 @@ const app = {
 
         try {
             const dataForAi = this.state.data.all.slice(0, 500); // Batasi data untuk efisiensi
-            const systemPrompt = `Anda adalah "Max", seorang analis data AI yang sangat canggih, ramah, dan profesional. Anda berinteraksi dalam format chat.
-            MISI UTAMA ANDA: Memberikan jawaban yang jelas, terstruktur, dan mendalam berdasarkan data keterlambatan siswa yang diberikan. JANGAN membuat asumsi atau memberikan informasi di luar data yang disediakan.
+            const systemPrompt = `Anda adalah "Max", seorang analis data AI yang sangat canggih, ramah, dan profesional. Anda berinteraksi dalam format chat yang rapi.
+            MISI UTAMA ANDA: Memberikan jawaban yang jelas, terstruktur, dan mendalam berdasarkan data keterlambatan siswa yang diberikan. JANGAN sesekali membuat asumsi atau memberikan informasi di luar data yang disediakan.
 
             PERATURAN FORMAT JAWABAN (WAJIB DIPATUHI):
-            1.  **Gunakan Markdown:** Selalu gunakan Markdown untuk memformat jawaban Anda (teks tebal, daftar, tabel).
+            1.  **Gunakan Markdown:** Selalu gunakan Markdown untuk memformat jawaban Anda (teks tebal, daftar, dll).
             2.  **Struktur Jawaban:** Mulai dengan ringkasan singkat, diikuti dengan detail dalam bentuk daftar berpoin (\`-\`) atau bernomor (\`1.\`). Gunakan teks **tebal** untuk menyorot metrik atau nama penting.
-            3.  **Tabel untuk Data Banyak:** Jika Anda perlu mendaftar lebih dari 5 item (contoh: daftar siswa), gunakan **Tabel Markdown** yang rapi.
-            4.  **Nada Profesional & Membantu:** Gunakan bahasa Indonesia yang baik, benar, dan mudah dipahami. Sapa pengguna dengan ramah.
+            3.  **Jadwal untuk Data Banyak:** Jika Anda perlu mendaftar lebih dari 5 item (contoh: daftar siswa), gunakan **Tabel Markdown** yang rapi.
+            4.  **Nada Profesional & Membantu:** Gunakan bahasa yang mudah dipahami tetapi tetap profesional. Sapa pengguna dengan baik.
             5.  **Fokus Pada Data:** Setiap jawaban harus berdasarkan data yang dilampirkan di bawah. Jika pertanyaan tidak bisa dijawab dengan data yang ada, nyatakan dengan sopan.
 
             CONTOH JAWABAN YANG BAIK:
@@ -559,10 +607,7 @@ const app = {
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) {
-                 const errorData = await response.json();
-                 throw new Error(errorData.error.message || 'Gagal menghubungi AI');
-            }
+            if (!response.ok) throw new Error((await response.json()).error.message);
             
             const result = await response.json();
             const aiResponse = result.candidates[0].content.parts[0].text;
@@ -570,7 +615,7 @@ const app = {
 
         } catch (error) {
             console.error('AI Error:', error);
-            this.updateLastBotMessage(`Maaf, terjadi kesalahan saat menghubungi AI: ${error.message}`);
+            this.updateLastBotMessage('Maaf, terjadi kesalahan saat menghubungi Asisten AI. Silakan coba lagi nanti.');
         }
     },
 
@@ -584,7 +629,7 @@ const app = {
         if (this.state.theme === 'dark' && sender === 'bot') bubble.classList.add('prose-dark');
         if (isThinking) { 
             bubble.id = 'thinking-bubble'; 
-            bubble.innerHTML = `<div class="flex items-center space-x-1 p-1"><div class="w-2 h-2 bg-current rounded-full animate-bounce" style="animation-delay: -0.3s;"></div><div class="w-2 h-2 bg-current rounded-full animate-bounce" style="animation-delay: -0.15s;"></div><div class="w-2 h-2 bg-current rounded-full animate-bounce"></div></div>`; 
+            bubble.innerHTML = `<div class="flex items-center space-x-1 p-1"><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: -0.3s;"></div><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: -0.15s;"></div><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div></div>`; 
         } else { 
             bubble.innerHTML = marked.parse(text); 
         }
@@ -598,56 +643,40 @@ const app = {
         const thinkingBubble = this.dom.containers.chat.querySelector('#thinking-bubble');
         if (thinkingBubble) { 
             thinkingBubble.innerHTML = marked.parse(newText);
-            thinkingBubble.id = ''; // Hapus id agar tidak terupdate lagi
+            thinkingBubble.id = ''; // Hapus id agar tidak diupdate lagi
         }
-    },
-
-    updateDate() {
-        const today = new Date();
-        this.dom.currentDate.textContent = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     },
 
     utils: {
         createIcons() {
-            // Gunakan setTimeout untuk memastikan Lucide sudah dimuat
-            setTimeout(() => { 
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons(); 
-                }
-            }, 0);
+            setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 0);
         },
         parseDate(s) {
             if (!s || typeof s !== 'string') return null;
             const parts = s.split('/');
             if (parts.length !== 3) return null;
-            // Asumsi format DD/MM/YYYY
             const [d, m, y] = parts.map(p => parseInt(p, 10));
             return new Date(y, m - 1, d);
         },
         getTopItems(data, key) {
-            if (!data || data.length === 0) return [];
             const counts = data.reduce((acc, row) => { acc[row[key]] = (acc[row[key]] || 0) + 1; return acc; }, {});
             return Object.entries(counts).map(([item, count]) => ({item, count})).sort((a,b) => b.count - a.count);
         },
         getChartOptions(isDoughnut = false) {
             const isDark = app.state.theme === 'dark';
             const options = {
-                responsive: true,
-                plugins: { 
-                    legend: { 
-                        position: isDoughnut ? 'bottom' : 'top',
-                        labels: { 
-                            color: isDark ? '#94a3b8' : '#64748b',
-                            font: { size: 12 }
-                        } 
-                    } 
-                },
-            };
-            if (!isDoughnut) {
-                options.scales = { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { 
                     y: { beginAtZero: true, ticks: { precision: 0, color: isDark ? '#94a3b8' : '#64748b' }, grid: { color: isDark ? '#334155' : '#e2e8f0' } }, 
                     x: { ticks: { color: isDark ? '#94a3b8' : '#64748b' }, grid: { display: false } } 
-                };
+                },
+                plugins: { 
+                    legend: { position: 'bottom', labels: { color: isDark ? '#94a3b8' : '#64748b', usePointStyle: true, boxWidth: 8 } } 
+                }
+            };
+            if (isDoughnut) {
+                delete options.scales;
             }
             return options;
         }
@@ -659,6 +688,9 @@ const app = {
         setTimeout(() => this.dom.toast.el.classList.remove('show'), duration);
     },
 };
+
+// Helper untuk mendapatkan variabel CSS di dalam JS
+const varGet = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 window.onload = () => app.init();
 
