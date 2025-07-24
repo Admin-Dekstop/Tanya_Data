@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnalyticX | Dasbor Keterlambatan Siswa</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Marked.js for rendering Markdown from AI -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-dev@latest"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Default to Dark Theme */
+            --bg-primary: #111827;      /* gray-900 */
+            --bg-secondary: #1f2937;   /* gray-800 */
+            --bg-tertiary: #374151;   /* gray-700 */
+            --bg-nav-mobile: rgba(31, 41, 55, 0.7);
+            --text-primary: #f9fafb;   /* gray-50 */
+            --text-secondary: #9ca3af; /* gray-400 */
+            --border-color: #4b5563;   /* gray-600 */
+            --accent-color: #8b5cf6;   /* violet-500 */
+            --accent-color-hover: #7c3aed; /* violet-600 */
+            --accent-glow: rgba(139, 92, 246, 0.3);
+        }
+        [data-theme='light'] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb; /* gray-50 */
+            --bg-tertiary: #f3f4f6;   /* gray-100 */
+            --bg-nav-mobile: rgba(255, 255, 255, 0.7);
+            --text-primary: #111827;   /* gray-900 */
+            --text-secondary: #6b7280; /* gray-500 */
+            --border-color: #e5e7eb;   /* gray-200 */
+            --accent-color: #6d28d9;   /* violet-700 */
+            --accent-color-hover: #5b21b6; /* violet-800 */
+            --accent-glow: rgba(109, 40, 217, 0.2);
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-primary); 
+            color: var(--text-primary); 
+            transition: background-color 0.3s, color 0.3s;
+            padding-bottom: 80px; 
+        }
+        @media (min-width: 1024px) { body { padding-bottom: 0; } }
+
+        .data-card { 
+            background-color: var(--bg-secondary); 
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .data-card:hover {
+            box-shadow: 0 0 20px 0 var(--accent-glow);
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+        }
+        
+        .main-nav .nav-item.active { background-color: var(--accent-color); color: #ffffff; font-weight: 600; }
+        .main-nav .nav-item:not(.active):hover { background-color: var(--bg-tertiary); }
+        
+        .mobile-bottom-nav { 
+            background-color: var(--bg-nav-mobile); 
+            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .mobile-bottom-nav .nav-item { color: var(--text-secondary); }
+        .mobile-bottom-nav .nav-item.active { color: var(--accent-color); font-weight: 600; }
+        .mobile-bottom-nav .nav-item.active .icon { transform: scale(1.1); }
+        
+        #notification-toast { transform: translate(-50%, 150%); } 
+        #notification-toast.show { transform: translate(-50%, -1.5rem); }
+        
+        @keyframes subtle-fade-in-up {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: subtle-fade-in-up 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="relative min-h-screen lg:flex">
+        <!-- Sidebar (Desktop) -->
+        <aside class="main-nav bg-secondary text-slate-300 w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 hidden lg:flex">
+            <div id="app-logo" class="flex items-center justify-center h-20 border-b cursor-pointer border-slate-700">
+                <i data-lucide="bar-chart-big" class="h-8 w-8 text-violet-400"></i>
+                <h1 class="text-xl font-bold ml-2 text-white">AnalyticX</h1>
+            </div>
+            <nav id="desktop-navigation" class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" data-page="dashboard" class="nav-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="layout-dashboard" class="mr-3"></i>Dasbor</a>
+                <a href="#" data-page="explorer" class="nav-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="table-2" class="mr-3"></i>Data Explorer</a>
+                <a href="#" data-page="assistant" class="nav-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="bot" class="mr-3"></i>AI Assistant</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="flex justify-between items-center p-4 border-b z-30 sticky top-0" style="border-color: var(--border-color); background-color: var(--bg-primary);">
+                <h1 id="header-title" class="font-bold text-xl">Dasbor</h1>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-secondary hidden sm:block" id="header-date"></span>
+                    <button id="theme-switcher" class="text-secondary hover:text-primary"><i data-lucide="sun" class="h-6 w-6"></i></button>
+                </div>
+            </header>
+
+            <main id="content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page-container">
+                    <div id="kpi-container" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+                        <div class="lg:col-span-3 data-card p-4 md:p-6 rounded-xl animate-fade-in" style="animation-delay: 0.4s;"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="line-chart" class="text-cyan-400"></i>Tren Keterlambatan per Kelas</h3><div id="class-chart-wrapper" class="h-80"></div></div>
+                        <div class="lg:col-span-2 data-card p-4 md:p-6 rounded-xl animate-fade-in" style="animation-delay: 0.5s;">
+                            <h3 class="font-bold text-lg md:text-xl mb-2 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Komposisi Alasan</h3>
+                            <div id="top-reason-wrapper" class="mb-4"></div>
+                            <div id="reason-chart-wrapper" class="h-72"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Explorer Page -->
+                <div id="explorer-page" class="page-container hidden">
+                    <div class="data-card p-4 md:p-6 rounded-xl">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
+                            <div><label for="start-date-filter" class="text-sm font-medium text-secondary">Dari Tanggal</label><input type="date" id="start-date-filter" class="mt-1 p-2 border rounded-lg w-full" style="background-color: var(--bg-primary); border-color: var(--border-color);"></div>
+                            <div><label for="end-date-filter" class="text-sm font-medium text-secondary">Hingga Tanggal</label><input type="date" id="end-date-filter" class="mt-1 p-2 border rounded-lg w-full" style="background-color: var(--bg-primary); border-color: var(--border-color);"></div>
+                            <div><label for="class-filter" class="text-sm font-medium text-secondary">Kelas</label><select id="class-filter" class="mt-1 p-2 border rounded-lg w-full" style="background-color: var(--bg-primary); border-color: var(--border-color);"></select></div>
+                            <div><label for="name-filter" class="text-sm font-medium text-secondary">Nama Siswa</label><input type="text" id="name-filter" placeholder="Cari nama..." class="mt-1 p-2 border rounded-lg w-full" style="background-color: var(--bg-primary); border-color: var(--border-color);"></div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-end gap-3 mb-6">
+                            <button id="filter-reset-btn" class="flex items-center justify-center gap-2 bg-tertiary text-primary font-semibold py-2 px-4 rounded-lg hover:opacity-80 transition-all"><i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset</button>
+                            <button id="pdf-download-btn" class="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md"><i data-lucide="download" class="w-4 h-4"></i> Unduh PDF</button>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-sm text-left" id="data-table-main"><thead class="text-xs uppercase" style="background-color: var(--bg-tertiary);"><tr id="data-table-header"></tr></thead><tbody id="data-table-body"></tbody></table></div>
+                    </div>
+                </div>
+
+                <!-- AI Assistant Page -->
+                <div id="assistant-page" class="page-container hidden h-full">
+                    <div class="data-card rounded-xl flex flex-col h-full">
+                        <div class="p-4 border-b flex items-center gap-2" style="border-color: var(--border-color);"><i data-lucide="sparkles" class="text-violet-400"></i><h2 class="text-xl font-bold">Asisten AI Gemini</h2></div>
+                        <div id="chat-window" class="flex-grow p-4 overflow-y-auto"></div>
+                        <div class="p-4 border-t" style="border-color: var(--border-color);">
+                            <div class="flex items-center">
+                                <input type="text" id="chat-prompt-input" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2" style="background-color: var(--bg-primary); border-color: var(--border-color); --tw-ring-color: var(--accent-color);" placeholder="Tanya tentang data keterlambatan...">
+                                <button id="chat-send-btn" class="text-white p-2.5 rounded-r-lg flex items-center justify-center transition-colors" style="background-color: var(--accent-color);"><i data-lucide="send-horizontal" class="h-5 w-5"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Mobile Bottom Navigation -->
+    <nav id="mobile-navigation" class="mobile-bottom-nav fixed bottom-0 left-0 right-0 h-16 flex justify-around items-center z-40 lg:hidden">
+        <a href="#" data-page="dashboard" class="nav-item flex flex-col items-center justify-center text-center px-2 transition-all duration-200"><i data-lucide="layout-dashboard" class="icon"></i><span class="text-xs mt-1">Dasbor</span></a>
+        <a href="#" data-page="explorer" class="nav-item flex flex-col items-center justify-center text-center px-2 transition-all duration-200"><i data-lucide="table-2" class="icon"></i><span class="text-xs mt-1">Explorer</span></a>
+        <a href="#" data-page="assistant" class="nav-item flex flex-col items-center justify-center text-center px-2 transition-all duration-200"><i data-lucide="bot" class="icon"></i><span class="text-xs mt-1">AI</span></a>
+    </nav>
+
+    <!-- Modals and Toasts -->
+    <div id="pdf-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: rgba(0,0,0,0.6);"><div class="data-card rounded-xl w-full max-w-md shadow-2xl"><div class="p-4 border-b" style="border-color: var(--border-color);"><h2 class="text-xl font-bold">Unduh Laporan PDF</h2></div><div class="p-6"><label for="pdf-filename-input" class="text-sm font-medium text-secondary">Judul Laporan</label><input type="text" id="pdf-filename-input" class="mt-1 p-2 border rounded-lg w-full" style="background-color: var(--bg-primary); border-color: var(--border-color);"><p class="text-xs text-secondary mt-2">Judul ini akan menjadi nama file dan kop laporan.</p></div><div class="p-4 flex justify-end gap-3" style="background-color: var(--bg-tertiary);"><button id="pdf-cancel-btn" class="bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-all">Batal</button><button id="pdf-confirm-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi</button></div></div></div>
+    <div id="notification-toast" class="fixed bottom-20 left-1/2 py-2 px-5 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500 lg:bottom-5"><p id="toast-text"></p></div>
+
+<script>
+// --- SCRIPT START --- //
+
+// Konfigurasi Aplikasi
+const CONFIG = {
+    GOOGLE_SHEETS_API_KEY: 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY', // Ganti dengan API Key Anda
+    SPREADSHEET_ID: '1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc', // Ganti dengan ID Spreadsheet Anda
+    GEMINI_API_KEY: 'AIzaSyDUIijYUqNa7zrQ_m3sC44-fopxuIs7eOA', // Ganti dengan Gemini API Key Anda
+    DATA_RANGE: 'Sheet1!A:F',
+};
+
+/**
+ * DashboardApp
+ * Struktur aplikasi yang dirombak total untuk modularitas.
+ * - state: Menyimpan semua data dinamis aplikasi.
+ * - dom: Menyimpan referensi elemen DOM untuk performa.
+ * - api: Mengelola semua panggilan ke API eksternal.
+ * - ui: Mengelola semua pembaruan pada antarmuka pengguna.
+ * - events: Mengelola semua event listener.
+ * - utils: Fungsi-fungsi bantuan.
+ */
+const DashboardApp = {
+    state: {
+        isLoading: true,
+        theme: 'dark',
+        allData: [],
+        filteredData: [],
+        headers: [],
+        analytics: {},
+        chartInstances: { byClass: null, byReason: null },
+    },
+
+    dom: {},
+
+    init() {
+        this.cacheDom();
+        this.events.bind();
+        this.ui.loadTheme();
+        this.ui.updateDate();
+        this.ui.switchPage('dashboard');
+        
+        if (CONFIG.GOOGLE_SHEETS_API_KEY.includes('GANTI_DENGAN') || CONFIG.SPREADSHEET_ID.includes('GANTI_DENGAN')) {
+            this.ui.showToast('Harap konfigurasikan API Key Google Sheets dan Spreadsheet ID.', 10000);
+            this.ui.renderSkeletons();
+        } else {
+            this.loadData();
+        }
+    },
+
+    cacheDom() {
+        this.dom = {
+            html: document.documentElement,
+            logo: document.getElementById('app-logo'),
+            desktopNav: document.getElementById('desktop-navigation'),
+            mobileNav: document.getElementById('mobile-navigation'),
+            pages: document.querySelectorAll('.page-container'),
+            pageTitle: document.getElementById('header-title'),
+            currentDate: document.getElementById('header-date'),
+            themeSwitcher: document.getElementById('theme-switcher'),
+            containers: {
+                kpi: document.getElementById('kpi-container'),
+                classChart: document.getElementById('class-chart-wrapper'),
+                reasonChart: document.getElementById('reason-chart-wrapper'),
+                topReason: document.getElementById('top-reason-wrapper'),
+                tableHeader: document.getElementById('data-table-header'),
+                tableBody: document.getElementById('data-table-body'),
+                chat: document.getElementById('chat-window'),
+            },
+            inputs: {
+                filterStart: document.getElementById('start-date-filter'),
+                filterEnd: document.getElementById('end-date-filter'),
+                filterClass: document.getElementById('class-filter'),
+                filterName: document.getElementById('name-filter'),
+                chat: document.getElementById('chat-prompt-input'),
+                pdfTitle: document.getElementById('pdf-filename-input'),
+            },
+            buttons: {
+                sendChat: document.getElementById('chat-send-btn'),
+                resetFilter: document.getElementById('filter-reset-btn'),
+                downloadPdf: document.getElementById('pdf-download-btn'),
+                confirmDownload: document.getElementById('pdf-confirm-btn'),
+                cancelDownload: document.getElementById('pdf-cancel-btn'),
+            },
+            pdfModal: document.getElementById('pdf-modal'),
+            toast: { el: document.getElementById('notification-toast'), msg: document.getElementById('toast-text') },
+        };
+    },
+
+    async loadData() {
+        this.state.isLoading = true;
+        this.ui.renderSkeletons();
+        try {
+            const data = await this.api.fetchSheetData();
+            this.state.headers = data.headers;
+            this.state.allData = data.rows;
+            this.state.filteredData = [...this.state.allData];
+            
+            this.ui.renderAll();
+            this.ui.showToast('Data berhasil dimuat!', 2000);
+        } catch (error) {
+            this.ui.showToast(`Gagal memuat data: ${error.message}`, 5000);
+            console.error(error);
+        } finally {
+            this.state.isLoading = false;
+        }
+    },
+
+    api: {
+        async fetchSheetData() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${CONFIG.DATA_RANGE}?key=${CONFIG.GOOGLE_SHEETS_API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error.message || 'Respons jaringan tidak OK');
+            }
+            const data = await response.json();
+            const rows = data.values;
+            if (!rows || rows.length < 2) throw new Error('Data tidak valid atau kosong.');
+
+            const headers = rows[0];
+            const processedRows = rows.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((h, i) => obj[h.toLowerCase().replace(/ /g, '_')] = row[i] || '');
+                return obj;
+            }).filter(row => row.tanggal); // Pastikan baris memiliki tanggal
+
+            return { headers, rows: processedRows };
+        },
+        async queryGemini(userInput, dataContext) {
+            const systemPrompt = `Anda adalah "AnalyticX", seorang analis data AI yang canggih, ramah, dan profesional, berinteraksi dalam format chat. MISI UTAMA ANDA: Memberikan jawaban yang jelas, terstruktur, dan mendalam berdasarkan data keterlambatan siswa yang diberikan. JANGAN membuat asumsi atau memberikan informasi di luar data yang disediakan. PERATURAN FORMAT JAWABAN (WAJIB DIPATUHI): 1. Gunakan Markdown: Selalu gunakan Markdown untuk memformat jawaban Anda (teks tebal, daftar, tabel). 2. Struktur Jawaban: Mulai dengan ringkasan singkat, diikuti dengan detail dalam bentuk daftar berpoin (\`-\`) atau bernomor (\`1.\`). Gunakan teks **tebal** untuk menyorot metrik atau nama penting. 3. Tabel untuk Data Banyak: Jika Anda perlu mendaftar lebih dari 5 item (contoh: daftar siswa), gunakan **Tabel Markdown** yang rapi. 4. Nada Profesional & Membantu: Gunakan bahasa Indonesia yang baik, benar, dan mudah dipahami. Sapa pengguna dengan ramah. 5. Fokus Pada Data: Setiap jawaban harus berdasarkan data yang dilampirkan di bawah. Jika pertanyaan tidak bisa dijawab dengan data yang ada, nyatakan dengan sopan. Berikut adalah data keterlambatan siswa (sampel): ${JSON.stringify(dataContext)}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nPertanyaan Pengguna: "${userInput}"` }] }] };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`;
+            
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error.message || 'Gagal menghubungi AI');
+            }
+            const result = await response.json();
+            if (result.candidates && result.candidates.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            }
+            throw new Error("Tidak ada respons dari AI.");
+        }
+    },
+
+    ui: {
+        renderAll() {
+            DashboardApp.utils.processAnalytics(DashboardApp.state.allData);
+            this.renderKpiCards();
+            this.renderClassChart();
+            this.renderReasonChart();
+            this.renderFilters();
+            this.renderTable();
+            this.createIcons();
+        },
+        renderSkeletons() {
+            const skeletonCard = `<div class="data-card p-5 animate-pulse"><div class="h-6 bg-tertiary rounded w-3/4 mb-4"></div><div class="h-10 bg-tertiary rounded w-1/2"></div></div>`;
+            DashboardApp.dom.containers.kpi.innerHTML = Array(4).fill(skeletonCard).join('');
+            const skeletonChart = `<div class="w-full h-full bg-tertiary rounded-lg animate-pulse"></div>`;
+            DashboardApp.dom.containers.classChart.innerHTML = skeletonChart;
+            DashboardApp.dom.containers.reasonChart.innerHTML = skeletonChart;
+            DashboardApp.dom.containers.topReason.innerHTML = `<div class="h-12 bg-tertiary rounded-lg animate-pulse"></div>`;
+        },
+        renderKpiCards() {
+            DashboardApp.dom.containers.kpi.innerHTML = DashboardApp.state.analytics.kpi.map((kpi, index) => `
+                <div class="data-card p-5 rounded-xl flex items-start gap-4 animate-fade-in" style="animation-delay: ${index * 100}ms">
+                    <div class="p-3 rounded-lg" style="background-color: var(--bg-primary);"><i data-lucide="${kpi.icon}" class="h-8 w-8 ${kpi.color}"></i></div>
+                    <div><p class="text-secondary font-medium">${kpi.title}</p><p class="text-2xl font-bold truncate">${kpi.value}</p>${kpi.sub ? `<p class="text-sm text-secondary">${kpi.sub}</p>` : ''}</div>
+                </div>`).join('');
+        },
+        renderClassChart() {
+            const container = DashboardApp.dom.containers.classChart;
+            container.innerHTML = '<canvas></canvas>';
+            if (DashboardApp.state.chartInstances.byClass) DashboardApp.state.chartInstances.byClass.destroy();
+            const data = DashboardApp.state.analytics.byClass;
+            const sortedData = Object.entries(data).sort((a, b) => b[1] - a[1]);
+            DashboardApp.state.chartInstances.byClass = new Chart(container.firstElementChild.getContext('2d'), { 
+                type: 'bar', 
+                data: { 
+                    labels: sortedData.map(d => d[0]), 
+                    datasets: [{ 
+                        label: 'Jumlah Pelanggaran', 
+                        data: sortedData.map(d => d[1]), 
+                        backgroundColor: 'rgba(34, 211, 238, 0.6)', 
+                        borderColor: 'rgba(34, 211, 238, 1)', 
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }] 
+                }, 
+                options: DashboardApp.utils.getChartOptions() 
+            });
+        },
+        renderReasonChart() {
+            const topReason = DashboardApp.state.analytics.topReason;
+            if (topReason) {
+                DashboardApp.dom.containers.topReason.innerHTML = `
+                    <div class="bg-amber-500/10 p-3 rounded-lg flex items-center gap-3">
+                        <i data-lucide="award" class="h-6 w-6 text-amber-500 flex-shrink-0"></i>
+                        <div>
+                            <p class="text-xs text-amber-500 font-semibold">ALASAN UTAMA</p>
+                            <p class="font-bold text-sm">${topReason.item} (${topReason.count} kasus)</p>
+                        </div>
+                    </div>`;
+            } else {
+                DashboardApp.dom.containers.topReason.innerHTML = '';
+            }
+            
+            const container = DashboardApp.dom.containers.reasonChart;
+            container.innerHTML = '<canvas></canvas>';
+            if (DashboardApp.state.chartInstances.byReason) DashboardApp.state.chartInstances.byReason.destroy();
+            const data = DashboardApp.state.analytics.byReason;
+            DashboardApp.state.chartInstances.byReason = new Chart(container.firstElementChild.getContext('2d'), { 
+                type: 'doughnut', 
+                data: { 
+                    labels: Object.keys(data), 
+                    datasets: [{ 
+                        data: Object.values(data), 
+                        backgroundColor: ['#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#3b82f6', '#14b8a6'], 
+                        borderColor: 'var(--bg-secondary)', 
+                        borderWidth: 4 
+                    }] 
+                }, 
+                options: { ...DashboardApp.utils.getChartOptions(true), maintainAspectRatio: false } 
+            });
+        },
+        renderFilters() {
+            const classes = [...new Set(DashboardApp.state.allData.map(row => row.kelas))].sort();
+            DashboardApp.dom.inputs.filterClass.innerHTML = '<option value="">Semua Kelas</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+        },
+        renderTable() {
+            const container = DashboardApp.dom.containers.tableBody;
+            DashboardApp.dom.containers.tableHeader.innerHTML = DashboardApp.state.headers.map(h => `<th class="px-4 py-3">${h}</th>`).join('');
+            if (DashboardApp.state.filteredData.length === 0) {
+                container.innerHTML = `<tr><td colspan="${DashboardApp.state.headers.length}" class="text-center p-8 text-secondary">Tidak ada data yang cocok dengan filter.</td></tr>`;
+                return;
+            }
+            container.innerHTML = DashboardApp.state.filteredData.map(row => 
+                `<tr class="border-b hover:bg-tertiary transition-colors" style="border-color: var(--border-color);">${DashboardApp.state.headers.map(h => `<td class="px-4 py-3">${row[h.toLowerCase().replace(/ /g, '_')]}</td>`).join('')}</tr>`
+            ).join('');
+        },
+        switchPage(pageId) {
+            this.pages.forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('animate-fade-in');
+            });
+            const activePage = document.getElementById(`${pageId}-page`);
+            if(activePage) {
+                activePage.classList.remove('hidden');
+                setTimeout(() => activePage.classList.add('animate-fade-in'), 10);
+            }
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === pageId);
+            });
+            
+            const pageTitleText = document.querySelector(`.desktop-navigation .nav-item[data-page="${pageId}"]`).innerText;
+            this.pageTitle.textContent = pageTitleText;
+            window.scrollTo(0, 0);
+            this.createIcons();
+        },
+        toggleTheme() {
+            DashboardApp.state.theme = DashboardApp.state.theme === 'light' ? 'dark' : 'light';
+            DashboardApp.dom.html.dataset.theme = DashboardApp.state.theme;
+            localStorage.setItem('analyticxTheme', DashboardApp.state.theme);
+            this.themeSwitcher.innerHTML = `<i data-lucide="${DashboardApp.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
+            this.createIcons();
+            if (!DashboardApp.state.isLoading) {
+                this.renderClassChart();
+                this.renderReasonChart();
+            }
+        },
+        loadTheme() {
+            DashboardApp.state.theme = localStorage.getItem('analyticxTheme') || 'dark';
+            DashboardApp.dom.html.dataset.theme = DashboardApp.state.theme;
+            this.themeSwitcher.innerHTML = `<i data-lucide="${DashboardApp.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
+        },
+        showToast(message, duration = 3000) {
+            this.toast.msg.textContent = message;
+            this.toast.el.classList.add('show');
+            setTimeout(() => this.toast.el.classList.remove('show'), duration);
+        },
+        updateDate() {
+            this.currentDate.textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        },
+        togglePdfModal(show) {
+            DashboardApp.dom.pdfModal.classList.toggle('hidden', !show);
+        },
+        addChatMessage(text, sender, isThinking = false) {
+            const container = DashboardApp.dom.containers.chat;
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex mb-4 gap-3 items-start ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const iconHtml = `<div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${sender === 'user' ? 'bg-violet-500 text-white' : 'bg-tertiary'}"><i data-lucide="${sender === 'user' ? 'user' : 'bot'}" class="w-5 h-5"></i></div>`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `prose prose-sm p-3 rounded-lg max-w-full ${sender === 'user' ? 'bg-violet-500 text-white prose-invert' : 'data-card'}`;
+            if (DashboardApp.state.theme === 'dark' && sender === 'bot') bubble.classList.add('prose-dark');
+
+            if (isThinking) {
+                bubble.id = 'thinking-bubble';
+                bubble.innerHTML = `<div class="flex items-center space-x-1 p-1"><div class="w-2 h-2 bg-current rounded-full animate-bounce" style="animation-delay: -0.3s;"></div><div class="w-2 h-2 bg-current rounded-full animate-bounce" style="animation-delay: -0.15s;"></div><div class="w-2 h-2 bg-current rounded-full animate-bounce"></div></div>`;
+            } else {
+                bubble.innerHTML = marked.parse(text);
+            }
+
+            wrapper.innerHTML = sender === 'user' ? `${bubble.outerHTML}${iconHtml}` : `${iconHtml}${bubble.outerHTML}`;
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+            this.createIcons();
+        },
+        updateLastBotMessage(newText) {
+            const thinkingBubble = DashboardApp.dom.containers.chat.querySelector('#thinking-bubble');
+            if (thinkingBubble) {
+                thinkingBubble.innerHTML = marked.parse(newText);
+                thinkingBubble.id = '';
+            }
+        },
+        createIcons() {
+            setTimeout(() => { if (typeof lucide !== 'undefined') { lucide.createIcons(); } }, 50);
+        }
+    },
+
+    events: {
+        bind() {
+            const handleNavClick = (e) => {
+                const navItem = e.target.closest('.nav-item');
+                if (navItem) {
+                    e.preventDefault();
+                    DashboardApp.ui.switchPage(navItem.dataset.page);
+                }
+            };
+            DashboardApp.dom.logo.addEventListener('click', (e) => { e.preventDefault(); DashboardApp.loadData(); });
+            DashboardApp.dom.desktopNav.addEventListener('click', handleNavClick);
+            DashboardApp.dom.mobileNav.addEventListener('click', handleNavClick);
+            DashboardApp.dom.themeSwitcher.addEventListener('click', () => DashboardApp.ui.toggleTheme());
+            DashboardApp.dom.buttons.sendChat.addEventListener('click', () => this.handleChatSubmit());
+            DashboardApp.dom.inputs.chat.addEventListener('keypress', e => e.key === 'Enter' && this.handleChatSubmit());
+            DashboardApp.dom.buttons.resetFilter.addEventListener('click', () => this.handleFilterReset());
+            DashboardApp.dom.buttons.downloadPdf.addEventListener('click', () => this.handleDownloadModalShow());
+            DashboardApp.dom.buttons.cancelDownload.addEventListener('click', () => DashboardApp.ui.togglePdfModal(false));
+            DashboardApp.dom.buttons.confirmDownload.addEventListener('click', () => this.handlePdfDownload());
+            Object.values(DashboardApp.dom.inputs).filter(el => el.id?.includes('filter')).forEach(el => el.addEventListener('input', () => this.handleFilterApply()));
+        },
+        handleFilterApply() {
+            const start = DashboardApp.dom.inputs.filterStart.value ? new Date(DashboardApp.dom.inputs.filterStart.value) : null;
+            const end = DashboardApp.dom.inputs.filterEnd.value ? new Date(DashboardApp.dom.inputs.filterEnd.value) : null;
+            const classFilter = DashboardApp.dom.inputs.filterClass.value;
+            const nameFilter = DashboardApp.dom.inputs.filterName.value.toLowerCase();
+            if (start) start.setHours(0, 0, 0, 0);
+            if (end) end.setHours(23, 59, 59, 999);
+            
+            DashboardApp.state.filteredData = DashboardApp.state.allData.filter(row => {
+                const rowDate = DashboardApp.utils.parseDate(row.tanggal);
+                const dateMatch = (!start || rowDate >= start) && (!end || rowDate <= end);
+                const classMatch = !classFilter || row.kelas === classFilter;
+                const nameMatch = row.nama.toLowerCase().includes(nameFilter);
+                return dateMatch && classMatch && nameMatch;
+            });
+            DashboardApp.ui.renderTable();
+        },
+        handleFilterReset() {
+            DashboardApp.dom.inputs.filterStart.value = '';
+            DashboardApp.dom.inputs.filterEnd.value = '';
+            DashboardApp.dom.inputs.filterClass.value = '';
+            DashboardApp.dom.inputs.filterName.value = '';
+            this.handleFilterApply();
+            DashboardApp.ui.showToast('Filter telah direset.');
+        },
+        handleDownloadModalShow() {
+            if (DashboardApp.state.filteredData.length === 0) {
+                DashboardApp.ui.showToast('Tidak ada data untuk diunduh.', 3000);
+                return;
+            }
+            const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+            DashboardApp.dom.inputs.pdfTitle.value = `Laporan Keterlambatan Siswa - ${today}`;
+            DashboardApp.ui.togglePdfModal(true);
+        },
+        handlePdfDownload() {
+            const customTitle = DashboardApp.dom.inputs.pdfTitle.value.trim();
+            if (!customTitle) {
+                DashboardApp.ui.showToast('Judul laporan tidak boleh kosong.', 3000);
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(18);
+            doc.text(customTitle, 14, 22);
+            const bodyData = DashboardApp.state.filteredData.map(row => DashboardApp.state.headers.map(h => row[h.toLowerCase().replace(/ /g, '_')]));
+            doc.autoTable({ head: [DashboardApp.state.headers], body: bodyData, startY: 30, theme: 'grid' });
+            doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
+            DashboardApp.ui.showToast('Laporan PDF sedang dibuat...', 2000);
+            DashboardApp.ui.togglePdfModal(false);
+        },
+        async handleChatSubmit() {
+            const userInput = DashboardApp.dom.inputs.chat.value.trim();
+            if (!userInput) return;
+            DashboardApp.ui.addChatMessage(userInput, 'user');
+            DashboardApp.dom.inputs.chat.value = '';
+            DashboardApp.ui.addChatMessage('...', 'bot', true);
+            try {
+                const dataForAi = DashboardApp.state.allData.slice(0, 500); // Batasi data untuk konteks
+                const aiResponse = await DashboardApp.api.queryGemini(userInput, dataForAi);
+                DashboardApp.ui.updateLastBotMessage(aiResponse);
+            } catch (error) {
+                console.error('AI Error:', error);
+                DashboardApp.ui.updateLastBotMessage(`Maaf, terjadi kesalahan saat menghubungi AI: ${error.message}`);
+            }
+        }
+    },
+
+    utils: {
+        processAnalytics(data) {
+            const byClass = {};
+            const byReason = {};
+            data.forEach(row => {
+                if (row.kelas) byClass[row.kelas.trim()] = (byClass[row.kelas.trim()] || 0) + 1;
+                if (row.keterangan) byReason[row.keterangan.trim()] = (byReason[row.keterangan.trim()] || 0) + 1;
+            });
+            const topStudent = this.getTopItems(data, 'nama');
+            const topClass = this.getTopItems(data, 'kelas');
+            const sortedReasons = Object.entries(byReason).sort((a, b) => b[1] - a[1]);
+            
+            DashboardApp.state.analytics = {
+                kpi: [
+                    { title: 'Total Pelanggaran', value: data.length, icon: 'shield-alert', color: 'text-red-500' },
+                    { title: 'Siswa Unik Terlambat', value: new Set(data.map(r => r.nama)).size, icon: 'users', color: 'text-blue-500' },
+                    { title: 'Pelanggar Terbanyak', value: topStudent[0]?.item || 'N/A', sub: `${topStudent[0]?.count || 0} kali`, icon: 'user-x', color: 'text-yellow-500' },
+                    { title: 'Kelas Terbanyak', value: topClass[0]?.item || 'N/A', sub: `${topClass[0]?.count || 0} kali`, icon: 'award', color: 'text-green-500' }
+                ],
+                byClass,
+                byReason,
+                topReason: sortedReasons.length > 0 ? { item: sortedReasons[0][0], count: sortedReasons[0][1] } : null
+            };
+        },
+        getTopItems(data, key) {
+            if (!data || data.length === 0) return [];
+            const counts = data.reduce((acc, row) => {
+                const item = row[key]?.trim();
+                if (item) acc[item] = (acc[item] || 0) + 1;
+                return acc;
+            }, {});
+            return Object.entries(counts).map(([item, count]) => ({ item, count })).sort((a, b) => b.count - a.count);
+        },
+        parseDate(s) {
+            if (!s || typeof s !== 'string') return null;
+            const parts = s.split('/');
+            if (parts.length !== 3) return null;
+            const [d, m, y] = parts.map(p => parseInt(p, 10));
+            return new Date(y, m - 1, d);
+        },
+        getChartOptions(isDoughnut = false) {
+            const isDark = DashboardApp.state.theme === 'dark';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            const gridColor = isDark ? '#4b5563' : '#e5e7eb';
+            const options = {
+                responsive: true,
+                animation: { duration: 1000 },
+                plugins: {
+                    legend: {
+                        position: isDoughnut ? 'bottom' : 'top',
+                        align: isDoughnut ? 'center' : 'end',
+                        labels: { color: textColor, font: { size: 12 } }
+                    }
+                },
+            };
+            if (!isDoughnut) {
+                options.scales = {
+                    y: { beginAtZero: true, ticks: { precision: 0, color: textColor }, grid: { color: gridColor } },
+                    x: { ticks: { color: textColor }, grid: { display: false } }
+                };
+            }
+            return options;
+        }
+    }
+};
+
+window.onload = () => DashboardApp.init();
+
+</script>
+</body>
+</html>
