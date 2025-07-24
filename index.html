@@ -3,372 +3,560 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Analitik Keterlambatan</title>
+    <title>Dasbor Analitik Keterlambatan Siswa</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS untuk styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Poppins -->
+    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-icons@0.372.0"></script>
+
     <!-- Pustaka untuk PDF & Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- Pustaka untuk manipulasi tanggal (date-fns) -->
+    <!-- Pustaka untuk manipulasi tanggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/umd/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/locale/id/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousMonday.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousTuesday.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousWednesday.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousThursday.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousFriday.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousSaturday.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.30.0/previousSunday.min.js"></script>
+
+
+    <!-- Pustaka untuk Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
-        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .slide-in-up { animation: slideInUp 0.5s ease-out forwards; }
-        #chat-window::-webkit-scrollbar { width: 6px; }
-        #chat-window::-webkit-scrollbar-track { background: #e5e7eb; }
-        #chat-window::-webkit-scrollbar-thumb { background: #60a5fa; border-radius: 3px; }
-        .chat-bubble table { width: 100%; margin-top: 12px; font-size: 0.8rem; border-collapse: collapse; }
-        .chat-bubble th, .chat-bubble td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-        .chat-bubble th { background-color: #e0f2fe; color: #0c4a6e; font-weight: 600; }
-        .typing-indicator span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #9ca3af; animation: bounce 1.4s infinite ease-in-out both; }
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        body { font-family: 'Inter', sans-serif; background-color: #e2e8f0; /* slate-200 */ }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        .chat-bubble {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #334155; /* slate-700 */
+            padding: 12px 16px;
+            border-radius: 16px;
+            max-width: 70%;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        .chat-bubble.user {
+            background-color: #059669; /* emerald-600 */
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.bot {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #334155; /* slate-700 */
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble table { width: 100%; margin-top: 12px; font-size: 0.875rem; border-collapse: collapse; }
+        .chat-bubble th, .chat-bubble td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+        .chat-bubble th { background-color: #e2e8f0; font-weight: 600; }
+        .chat-bubble td { background-color: #ffffff; }
+        .chat-bubble .chart-container {
+            width: 100%;
+            height: 300px; /* Atur tinggi default untuk grafik */
+            margin-top: 12px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .download-btn-chat {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .download-btn-chat:hover {
+            background-color: #2563eb; /* blue-600 */
+        }
+        .download-btn-chat.pdf { background-color: #ef4444; } /* red-500 */
+        .download-btn-chat.pdf:hover { background-color: #dc2626; } /* red-600 */
+        .download-btn-chat.excel { background-color: #22c55e; } /* green-500 */
+        .download-btn-chat.excel:hover { background-color: #16a34a; } /* green-600 */
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body class="antialiased text-slate-800">
 
-    <!-- ===== HALAMAN LOGIN ===== -->
-    <div id="login-screen" class="flex items-center justify-center min-h-screen bg-gray-100">
-        <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg slide-in-up">
-            <div class="text-center">
-                <h1 class="text-3xl font-bold text-indigo-900">Selamat Datang</h1>
-                <p class="mt-2 text-gray-500">Silakan masuk untuk mengakses dasbor</p>
-            </div>
-            <form id="login-form" class="space-y-6">
+    <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Bagian Atas: Tabel Data Hari Ini -->
+        <section id="today-section" class="bg-white p-6 rounded-2xl shadow-lg mb-8 fade-in">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
                 <div>
-                    <label for="username" class="text-sm font-medium text-gray-700">Nama Pengguna</label>
-                    <input id="username" name="username" type="text" required class="w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Masukkan nama pengguna">
+                    <h2 class="text-2xl font-bold text-slate-800">Data Realtime Siswa Terlambat  Hari ini</h2>
+                    <p id="current-date" class="text-slate-500"></p>
                 </div>
-                <div>
-                    <label for="password" class="text-sm font-medium text-gray-700">Kata Sandi</label>
-                    <input id="password" name="password" type="password" required class="w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Masukkan kata sandi">
-                </div>
-                <div id="login-error" class="text-sm text-center text-red-600 font-medium h-4"></div>
-                <div>
-                    <button type="submit" id="login-btn" class="w-full flex justify-center items-center gap-2 px-4 py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 disabled:bg-indigo-400">
-                        <span id="login-btn-text">Masuk</span>
-                        <svg id="login-spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <div id="today-download-buttons" class="flex items-center gap-3 hidden">
+                    <button data-type="pdf" class="download-btn bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition flex items-center gap-2 text-sm font-semibold">
+                        <i data-lucide="file-type-pdf" class="w-4 h-4"></i> Unduh PDF
+                    </button>
+                    <button data-type="excel" class="download-btn bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition flex items-center gap-2 text-sm font-semibold">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Unduh Excel
                     </button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ===== HALAMAN DASBOR (TERSEMBUNYI) ===== -->
-    <div id="dashboard-screen" class="hidden">
-        <div class="flex flex-col lg:flex-row w-full min-h-screen gap-8 p-4 sm:p-6 lg:p-8">
-            <!-- Kolom Kiri: Konten Utama -->
-            <main class="w-full lg:w-2/3 space-y-8">
-                <section id="today-section" class="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-5">
-                        <div>
-                            <h1 class="text-3xl font-bold text-indigo-900">Dasbor Keterlambatan</h1>
-                            <p id="current-date" class="text-gray-500 font-medium"></p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                             <div id="today-download-buttons" class="flex items-center gap-3 hidden">
-                                <button data-type="pdf" class="download-btn bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-all flex items-center gap-2 text-sm font-semibold shadow-sm">PDF</button>
-                                <button data-type="excel" class="download-btn bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-all flex items-center gap-2 text-sm font-semibold shadow-sm">Excel</button>
-                            </div>
-                            <button id="logout-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all flex items-center gap-2 text-sm font-semibold shadow-sm">Keluar</button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <div id="today-loading" class="text-center py-12">
-                             <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <p class="mt-3 text-gray-500 font-medium">Memuat data...</p>
-                        </div>
-                        <table id="today-table" class="w-full text-sm text-left text-gray-600 hidden">
-                            <thead class="text-xs text-indigo-800 uppercase bg-indigo-100 rounded-t-lg"></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </section>
-            </main>
-
-            <!-- Kolom Kanan: Asisten Chat -->
-            <aside class="w-full lg:w-1/3 flex flex-col">
-                <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 flex flex-col h-full max-h-[85vh]">
-                    <h2 class="text-2xl font-bold text-indigo-900 mb-4 flex items-center gap-3">Asisten Data</h2>
-                    <div class="flex-grow bg-gray-100 p-4 rounded-lg overflow-y-auto h-96 mb-4" id="chat-window"></div>
-                    <div class="mt-auto flex gap-2">
-                        <input type="text" id="chat-input" placeholder="Tanya saya..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                        <button id="send-btn" class="bg-indigo-600 text-white p-3 rounded-lg shadow-md hover:bg-indigo-700 transition-all disabled:bg-indigo-300">Kirim</button>
-                    </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="today-table" class="w-full text-sm text-left text-slate-500">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                        <!-- Header akan diisi oleh JS -->
+                    </thead>
+                    <tbody>
+                        <!-- Data akan diisi oleh JS -->
+                    </tbody>
+                </table>
+                <div id="today-loading" class="text-center py-8">
+                    <i data-lucide="loader-2" class="w-8 h-8 text-emerald-500 mx-auto animate-spin"></i>
+                    <p class="mt-2 text-slate-500">Memuat data hari ini...</p>
                 </div>
-            </aside>
-        </div>
+            </div>
+        </section>
+
+        <!-- Bagian Bawah: Asisten Chat Cerdas -->
+        <section id="chat-section" class="bg-white p-6 rounded-2xl shadow-lg fade-in" style="animation-delay: 0.2s;">
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">Asisten Chat Cerdas</h3>
+            <div class="flex flex-col flex-grow bg-slate-100 p-4 rounded-lg overflow-y-auto h-96" id="chat-window">
+                <!-- Pesan chat akan muncul di sini -->
+            </div>
+            <div class="mt-4 flex gap-2">
+                <input type="text" id="search-input" placeholder="Tanya tentang data: 'minggu kemarin', 'hari Senin', 'dari tanggal 10 Juli', 'grafik bulan ini', dll." class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button id="search-btn" class="bg-emerald-600 text-white px-5 py-2 rounded-lg shadow-md hover:bg-emerald-700 transition-colors font-semibold flex items-center justify-center">
+                    <i data-lucide="send-horizontal" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </section>
     </div>
 
     <script>
-        // --- KONFIGURASI PENTING ---
-        const API_KEY = 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY'; 
-        const SPREADSHEET_ID = '1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc';
-        const DATA_RANGE = 'Sheet1!A:F'; 
-        const LOGIN_RANGE = 'Sheet2!A:B'; 
+        // --- KONFIGURASI GOOGLE SHEETS ---
+        // GANTI DENGAN API KEY DAN SPREADSHEET ID ANDA
+        const API_KEY = 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY'; // Kosongkan jika Anda ingin Canvas menyediakan API Key secara otomatis untuk model Gemini
+        const SPREADSHEET_ID = '1-1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc'; // Ganti dengan ID Spreadsheet Anda
+        const RANGE = 'Sheet1!A:F'; // Sesuaikan jika range data Anda berbeda
 
         // --- ELEMEN DOM ---
-        const loginScreen = document.getElementById('login-screen');
-        const loginForm = document.getElementById('login-form');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginError = document.getElementById('login-error');
-        const loginBtn = document.getElementById('login-btn');
-        const loginBtnText = document.getElementById('login-btn-text');
-        const loginSpinner = document.getElementById('login-spinner');
-        const dashboardScreen = document.getElementById('dashboard-screen');
-        const logoutBtn = document.getElementById('logout-btn');
-        const todayTable = document.getElementById('today-table');
-        const todayTableBody = todayTable.querySelector('tbody');
-        const todayTableHeader = todayTable.querySelector('thead');
+        const todayTableBody = document.querySelector('#today-table tbody');
+        const todayTableHeader = document.querySelector('#today-table thead');
         const todayLoading = document.getElementById('today-loading');
         const todayDownloadButtons = document.getElementById('today-download-buttons');
         const chatWindow = document.getElementById('chat-window');
-        const chatInput = document.getElementById('chat-input');
-        const sendBtn = document.getElementById('send-btn');
-        const currentDateEl = document.getElementById('current-date');
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
 
         // --- GLOBAL STATE ---
         let allStudentData = [];
         let headers = [];
-        // Deklarasikan variabel di sini, tapi jangan diisi dulu
-        let parse, format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, startOfYesterday, endOfYesterday, locale;
+        const { 
+            parse, format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay,
+            previousMonday, previousTuesday, previousWednesday, previousThursday, previousFriday, previousSaturday, previousSunday
+        } = window.dateFns;
+        const idLocale = window.dateFns.locale.id; // Menggunakan locale Bahasa Indonesia
 
-        // --- INISIALISASI UTAMA ---
-        window.addEventListener('load', () => {
-            // FIX: Isi variabel setelah pustaka date-fns dipastikan sudah dimuat
-            // Ini mencegah error "Cannot destructure property 'parse' of 'window.dateFns' as it is undefined"
-            ({ parse, format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, startOfYesterday, endOfYesterday, locale } = window.dateFns);
+        // --- FUNGSI UTAMA ---
 
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                initializeDashboard();
-            } else {
-                loginScreen.style.display = 'flex';
-                dashboardScreen.style.display = 'none';
+        /**
+         * Memuat dan memproses data dari Google Sheets.
+         * Menampilkan pesan error jika API Key atau Spreadsheet ID tidak dikonfigurasi.
+         */
+        async function loadData() {
+            if (!API_KEY && typeof __app_id === 'undefined') { // Check if API_KEY is empty and __app_id is not defined
+                handleError(todayLoading, "Harap konfigurasikan API Key dan Spreadsheet ID di dalam kode, atau jalankan di lingkungan Canvas.");
+                return;
             }
-        });
-
-        // --- LOGIKA LOGIN & LOGOUT ---
-        loginForm.addEventListener('submit', handleLogin);
-        logoutBtn.addEventListener('click', handleLogout);
-
-        async function handleLogin(event) {
-            event.preventDefault();
-            loginError.textContent = '';
-            loginBtn.disabled = true;
-            loginBtnText.textContent = 'Memverifikasi...';
-            loginSpinner.classList.remove('hidden');
-
-            const username = usernameInput.value;
-            const password = passwordInput.value;
+            if (SPREADSHEET_ID.startsWith('1-I44W70L0h80_0B81w767420_0000000000000000000')) {
+                 handleError(todayLoading, "Harap ganti SPREADSHEET_ID dengan ID Spreadsheet Anda.");
+                 return;
+            }
 
             try {
-                const isValid = await validateCredentials(username, password);
-                if (isValid) {
-                    sessionStorage.setItem('isLoggedIn', 'true');
-                    initializeDashboard();
-                } else {
-                    loginError.textContent = 'Nama pengguna atau kata sandi salah.';
-                    resetLoginButton();
-                }
-            } catch (error) {
-                loginError.textContent = `Error: ${error.message}`;
-                resetLoginButton();
-            }
-        }
-        
-        function resetLoginButton() {
-            loginBtn.disabled = false;
-            loginBtnText.textContent = 'Masuk';
-            loginSpinner.classList.add('hidden');
-        }
-
-        function handleLogout() {
-            sessionStorage.removeItem('isLoggedIn');
-            location.reload();
-        }
-
-        async function validateCredentials(username, password) {
-            if (API_KEY.startsWith('GANTI') || SPREADSHEET_ID.startsWith('GANTI')) {
-                throw new Error("API Key/ID Sheet belum dikonfigurasi.");
-            }
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${LOGIN_RANGE}?key=${API_KEY}`;
-            console.log("Mencoba mengambil data dari:", url);
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.error("Gagal mengambil data login. Status:", response.status);
-                throw new Error("Gagal terhubung ke server. Periksa koneksi atau setelan Sheet.");
-            }
-            
-            const data = await response.json();
-            console.log("Data diterima dari Sheet2:", data.values);
-
-            if (!data.values || data.values.length < 2) {
-                console.log("Tidak ada data kredensial yang valid di Sheet2.");
-                return false;
-            }
-
-            const credentials = data.values.slice(1);
-            const trimmedUsername = username.trim();
-            const trimmedPassword = password.trim();
-
-            const isValid = credentials.some(row => 
-                row[0] && row[1] &&
-                row[0].trim() === trimmedUsername && 
-                row[1].trim() === trimmedPassword
-            );
-            
-            console.log(`Validasi untuk "${trimmedUsername}": ${isValid ? 'Berhasil' : 'Gagal'}`);
-            return isValid;
-        }
-
-        // --- INISIALISASI DASBOR ---
-        function initializeDashboard() {
-            loginScreen.style.display = 'none';
-            dashboardScreen.style.display = 'block';
-            
-            // FIX: Gunakan variabel 'locale' yang sudah didefinisikan
-            currentDateEl.textContent = format(new Date(), 'EEEE, d MMMM yyyy', { locale: locale.id });
-            loadDashboardData();
-            addBotMessage("Halo! Saya Asisten Data Anda. Silakan ajukan pertanyaan Anda.");
-            
-            sendBtn.addEventListener('click', handleChatSubmit);
-            chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChatSubmit(); });
-
-            document.querySelectorAll('#today-download-buttons .download-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const type = e.currentTarget.dataset.type;
-                    const today = new Date();
-                    const todayData = allStudentData.filter(d => format(d.dateObject, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd'));
-                    const title = `Laporan Keterlambatan - ${format(today, 'd MMMM yyyy')}`;
-                    if (type === 'pdf') generatePDF(todayData, title);
-                    if (type === 'excel') generateExcel(todayData, title);
-                });
-            });
-        }
-
-        // --- FUNGSI-FUNGSI DASBOR ---
-        async function loadDashboardData() {
-            todayLoading.style.display = 'block';
-            try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${DATA_RANGE}?key=${API_KEY}`;
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
                 const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
-                
                 processSheetData(data.values);
                 displayTodaysTable();
             } catch (error) {
-                console.error('Gagal mengambil data dasbor:', error);
-                handleError(todayLoading, `Gagal mengambil data dasbor: ${error.message}`);
+                console.error('Gagal mengambil data:', error);
+                handleError(todayLoading, `Gagal mengambil data: ${error.message}. Pastikan API Key dan Spreadsheet ID benar dan API Google Sheets sudah diaktifkan.`);
             }
         }
 
+        /**
+         * Mengubah data mentah dari Google Sheets menjadi array of objects.
+         * Mem-parsing kolom 'Tanggal' menjadi objek Date.
+         * @param {Array<Array<string>>} rows - Data mentah dari Google Sheets.
+         */
         function processSheetData(rows) {
             if (!rows || rows.length < 2) {
                 allStudentData = []; headers = []; return;
             }
+            // Baris pertama adalah header
             headers = rows[0].map(h => h.trim());
-            const dateHeaderIndex = headers.findIndex(h => h.toLowerCase().includes('tanggal'));
-            if (dateHeaderIndex === -1) {
-                handleError(todayLoading, "Kolom 'Tanggal' tidak ditemukan di Sheet1.");
-                return;
-            }
+            const dateHeader = headers.find(h => h.toLowerCase().includes('tanggal'));
             const dataRows = rows.slice(1);
+            
             allStudentData = dataRows.map(row => {
                 const studentObject = {};
-                headers.forEach((header, index) => { studentObject[header] = row[index] || ''; });
-                const dateString = studentObject[headers[dateHeaderIndex]];
-                if (dateString) {
-                    try { studentObject.dateObject = parse(dateString, 'dd/MM/yyyy', new Date()); } 
-                    catch (e) { studentObject.dateObject = null; }
+                headers.forEach((header, index) => {
+                    studentObject[header] = row[index] || '';
+                });
+                // PENTING: Parsing tanggal. Asumsi format di sheet adalah 'dd/MM/yyyy'.
+                // Jika format berbeda, ubah di sini. Contoh: 'MM/dd/yyyy'
+                if (dateHeader && studentObject[dateHeader]) {
+                    try {
+                        studentObject.dateObject = parse(studentObject[dateHeader], 'dd/MM/yyyy', new Date());
+                    } catch (e) {
+                        studentObject.dateObject = null; // Tanggal tidak valid
+                        console.warn(`Gagal parsing tanggal '${studentObject[dateHeader]}': ${e.message}`);
+                    }
                 }
                 return studentObject;
-            }).filter(s => s.dateObject && !isNaN(s.dateObject));
+            }).filter(s => s.dateObject); // Hanya simpan data dengan tanggal yang valid
         }
 
+        /**
+         * Menampilkan data keterlambatan hari ini di tabel utama.
+         */
         function displayTodaysTable() {
             const today = new Date();
-            const todayData = allStudentData.filter(d => format(d.dateObject, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd'));
+            const todayData = allStudentData.filter(d => isSameDay(d.dateObject, today));
+            
             todayLoading.style.display = 'none';
-            todayTable.classList.remove('hidden');
-            todayTableHeader.innerHTML = `<tr>${headers.map(h => `<th scope="col" class="px-6 py-4">${h}</th>`).join('')}</tr>`;
+            todayTableHeader.innerHTML = `<tr>${headers.map(h => `<th scope="col" class="px-6 py-3">${h}</th>`).join('')}</tr>`;
+            
             if (todayData.length === 0) {
-                todayTableBody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center py-8">Tidak ada data keterlambatan hari ini.</td></tr>`;
+                todayTableBody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center py-6">Tidak ada data keterlambatan hari ini.</td></tr>`;
                 todayDownloadButtons.classList.add('hidden');
             } else {
-                todayTableBody.innerHTML = todayData.map(row => `<tr class="bg-white border-b hover:bg-gray-50">${headers.map(h => `<td class="px-6 py-4">${row[h]}</td>`).join('')}</tr>`).join('');
+                todayTableBody.innerHTML = todayData.map(row => `
+                    <tr class="bg-white border-b hover:bg-slate-50">
+                        ${headers.map(h => `<td class="px-6 py-4">${row[h]}</td>`).join('')}
+                    </tr>
+                `).join('');
                 todayDownloadButtons.classList.remove('hidden');
             }
         }
 
-        async function handleChatSubmit() {
-            const query = chatInput.value.trim();
-            if (!query) return;
-            addUserMessage(query);
-            chatInput.value = '';
-            chatInput.disabled = true;
-            sendBtn.disabled = true;
-            addTypingIndicator();
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            processQuery(query);
-            removeTypingIndicator();
-            chatInput.disabled = false;
-            sendBtn.disabled = false;
-            chatInput.focus();
-        }
+        // --- FUNGSI ASISTEN CHAT CERDAS (INTEGRASI LLM) ---
 
-        function processQuery(query) {
-            const lowerQuery = query.toLowerCase();
-            const dateRange = parseDateQuery(lowerQuery);
-            if (dateRange) {
-                const results = allStudentData.filter(d => d.dateObject >= dateRange.start && d.dateObject <= dateRange.end);
-                displayResultsInChat(results, dateRange.title);
-            } else {
-                const searchResults = allStudentData.filter(row => Object.values(row).some(value => String(value).toLowerCase().includes(lowerQuery)));
-                if(searchResults.length > 0) {
-                     displayResultsInChat(searchResults, `Hasil Pencarian untuk "${query}"`);
-                } else {
-                    addBotMessage(`Maaf, saya tidak menemukan data yang cocok dengan "${query}".`);
+        /**
+         * Mengirim query pengguna ke LLM dan memproses responsnya.
+         */
+        async function handleSearch() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            addChatMessage('user', query);
+            searchInput.value = '';
+            const botThinkingMessage = addChatMessage('bot', `<i data-lucide="loader-2" class="w-5 h-5 inline-block animate-spin mr-2"></i> Memproses permintaan Anda...`);
+            lucide.createIcons(); // Render loader icon
+
+            try {
+                // Prompt untuk LLM
+                const prompt = `Anda adalah asisten data untuk dasbor keterlambatan siswa. Data yang tersedia memiliki header berikut: ${JSON.stringify(headers)}.
+                Tugas Anda adalah memahami pertanyaan pengguna dan memberikan instruksi dalam format JSON untuk memfilter data atau membuat grafik.
+                Tanggal harus dalam format 'YYYY-MM-DD'.
+
+                Format JSON yang diharapkan:
+                {
+                    "action": "query_data" | "chart_data" | "general_response",
+                    "relativePeriod": "today" | "yesterday" | "last_week" | "this_month" | "all_data" | "last_monday" | "last_tuesday" | "last_wednesday" | "last_thursday" | "last_friday" | "last_saturday" | "last_sunday" | null,
+                    "startDate": "YYYY-MM-DD" | null,
+                    "endDate": "YYYY-MM-DD" | null,
+                    "filters": {"[nama_kolom]": "[nilai_filter]"} | null,
+                    "chartType": "bar" | "pie" | "line" | null,
+                    "chartDimension": "[nama_kolom]" | null,
+                    "message": "Pesan respons jika action adalah general_response" | null
                 }
+
+                Prioritas:
+                1. Jika ada tanggal spesifik (misal: "dari tanggal X", "sampai tanggal Y", "antara X dan Y"), gunakan "startDate" dan/atau "endDate".
+                2. Jika ada periode relatif (misal: "kemarin", "minggu lalu", "hari Senin"), gunakan "relativePeriod".
+                3. Jika ada filter spesifik (misal: "nama Budi", "kelas A"), gunakan "filters".
+                4. Jika ada permintaan grafik, gunakan "chartType" dan "chartDimension".
+
+                Contoh:
+                - User: "data keterlambatan minggu lalu"
+                  Output: {"action": "query_data", "relativePeriod": "last_week", "startDate": null, "endDate": null, "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "grafik keterlambatan per kelas bulan ini"
+                  Output: {"action": "chart_data", "relativePeriod": "this_month", "startDate": null, "endDate": null, "filters": null, "chartType": "bar", "chartDimension": "Kelas", "message": null}
+                - User: "berapa siswa yang terlambat hari ini"
+                  Output: {"action": "query_data", "relativePeriod": "today", "startDate": null, "endDate": null, "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "cari siswa bernama Budi"
+                  Output: {"action": "query_data", "relativePeriod": null, "startDate": null, "endDate": null, "filters": {"Nama": "Budi"}, "chartType": null, "chartDimension": null, "message": null}
+                - User: "data hari Senin"
+                  Output: {"action": "query_data", "relativePeriod": "last_monday", "startDate": null, "endDate": null, "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "data dari tanggal 10 Juli 2024 dan seterusnya"
+                  Output: {"action": "query_data", "relativePeriod": null, "startDate": "2024-07-10", "endDate": null, "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "data dari bulan Januari 2024 dan seterusnya"
+                  Output: {"action": "query_data", "relativePeriod": null, "startDate": "2024-01-01", "endDate": null, "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "data sampai tanggal 15 Maret 2024"
+                  Output: {"action": "query_data", "relativePeriod": null, "startDate": null, "endDate": "2024-03-15", "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "data antara 1 Januari 2024 dan 31 Januari 2024"
+                  Output: {"action": "query_data", "relativePeriod": null, "startDate": "2024-01-01", "endDate": "2024-01-31", "filters": null, "chartType": null, "chartDimension": null, "message": null}
+                - User: "halo"
+                  Output: {"action": "general_response", "relativePeriod": null, "startDate": null, "endDate": null, "filters": null, "chartType": null, "chartDimension": null, "message": "Halo! Ada yang bisa saya bantu terkait data keterlambatan siswa?"}
+                
+                Pastikan semua string dalam JSON menggunakan double quotes.
+                Pertanyaan pengguna: "${query}"
+                `;
+
+                const chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "action": { "type": "STRING" },
+                                "relativePeriod": { "type": "STRING", "nullable": true },
+                                "startDate": { "type": "STRING", "nullable": true },
+                                "endDate": { "type": "STRING", "nullable": true },
+                                "filters": { "type": "OBJECT", "nullable": true },
+                                "chartType": { "type": "STRING", "nullable": true },
+                                "chartDimension": { "type": "STRING", "nullable": true },
+                                "message": { "type": "STRING", "nullable": true }
+                            },
+                            "propertyOrdering": ["action", "relativePeriod", "startDate", "endDate", "filters", "chartType", "chartDimension", "message"]
+                        }
+                    }
+                };
+                
+                const apiKey = API_KEY; // If API_KEY is empty, Canvas will provide it
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                // Hapus pesan "Memproses..."
+                chatWindow.removeChild(botThinkingMessage);
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const jsonResponse = JSON.parse(result.candidates[0].content.parts[0].text);
+                    console.log("LLM Response:", jsonResponse); // For debugging
+
+                    let filteredData = [];
+                    let title = "Hasil Pencarian";
+
+                    // Dapatkan rentang tanggal dari LLM
+                    const dateRangeParams = {
+                        relativePeriod: jsonResponse.relativePeriod,
+                        startDate: jsonResponse.startDate,
+                        endDate: jsonResponse.endDate
+                    };
+                    const dateRange = getDateRange(dateRangeParams);
+
+                    if (dateRange && dateRange.start && dateRange.end) {
+                        filteredData = allStudentData.filter(d => 
+                            d.dateObject && d.dateObject >= dateRange.start && d.dateObject <= dateRange.end
+                        );
+                        title = dateRange.title;
+                    } else {
+                        filteredData = allStudentData; // Default ke semua data jika periode tidak dikenali atau tidak valid
+                        title = "Semua Data Keterlambatan";
+                    }
+
+                    // Filter data berdasarkan filter spesifik (nama/kelas)
+                    if (jsonResponse.filters) {
+                        for (const key in jsonResponse.filters) {
+                            const filterValue = String(jsonResponse.filters[key]).toLowerCase();
+                            const headerKey = headers.find(h => h.toLowerCase() === key.toLowerCase()); // Temukan header yang cocok (case-insensitive)
+                            if (headerKey) {
+                                filteredData = filteredData.filter(d => 
+                                    String(d[headerKey]).toLowerCase().includes(filterValue)
+                                );
+                            }
+                        }
+                        if (Object.keys(jsonResponse.filters).length > 0) {
+                             title += ` (Filter: ${Object.entries(jsonResponse.filters).map(([k,v]) => `${k}: ${v}`).join(', ')})`;
+                        }
+                    }
+
+                    // Tampilkan hasil berdasarkan action dari LLM
+                    if (jsonResponse.action === 'query_data') {
+                        displayResultsInChat(filteredData, title);
+                    } else if (jsonResponse.action === 'chart_data' && jsonResponse.chartType && jsonResponse.chartDimension) {
+                        displayChartInChat(filteredData, jsonResponse.chartType, jsonResponse.chartDimension, title);
+                    } else if (jsonResponse.action === 'general_response' && jsonResponse.message) {
+                        addChatMessage('bot', jsonResponse.message);
+                    } else {
+                        addChatMessage('bot', "Maaf, saya tidak dapat memproses permintaan Anda. Coba formulasi ulang atau tanyakan hal lain.");
+                    }
+
+                } else {
+                    addChatMessage('bot', "Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi.");
+                }
+
+            } catch (error) {
+                console.error('Error fetching from LLM:', error);
+                // Hapus pesan "Memproses..." jika masih ada
+                if (chatWindow.contains(botThinkingMessage)) {
+                    chatWindow.removeChild(botThinkingMessage);
+                }
+                addChatMessage('bot', `Maaf, terjadi kesalahan teknis: ${error.message}.`);
             }
         }
 
-        function parseDateQuery(query) {
+        /**
+         * Mendapatkan rentang tanggal berdasarkan parameter dari LLM.
+         * @param {{relativePeriod?: string, startDate?: string, endDate?: string}} params - Parameter rentang tanggal.
+         * @returns {{start: Date, end: Date, title: string}|null} Objek rentang tanggal.
+         */
+        function getDateRange(params) {
             const now = new Date();
-            if (query.includes('hari ini')) return { start: new Date(new Date().setHours(0,0,0,0)), end: new Date(new Date().setHours(23,59,59,999)), title: `Laporan Hari Ini` };
-            if (query.includes('kemarin')) return { start: startOfYesterday(), end: endOfYesterday(), title: `Laporan Kemarin` };
-            if (query.includes('minggu ini')) return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }), title: `Laporan Minggu Ini` };
-            if (query.includes('minggu lalu')) return { start: startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }), end: endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 }), title: `Laporan Minggu Lalu` };
-            if (query.includes('bulan ini')) return { start: startOfMonth(now), end: endOfMonth(now), title: `Laporan Bulan Ini` };
-            return null;
+            let start = null;
+            let end = null;
+            let title = "Laporan Keterlambatan";
+
+            // Prioritize explicit start/end dates from LLM
+            if (params.startDate && params.endDate) {
+                start = parse(params.startDate, 'yyyy-MM-dd', now);
+                end = parse(params.endDate, 'yyyy-MM-dd', now);
+                title = `Laporan Keterlambatan (${format(start, 'd MMMM yyyy', { locale: idLocale })} - ${format(end, 'd MMMM yyyy', { locale: idLocale })})`;
+            } else if (params.startDate) {
+                start = parse(params.startDate, 'yyyy-MM-dd', now);
+                end = now; // "dan seterusnya" implies until today
+                title = `Laporan Keterlambatan dari ${format(start, 'd MMMM yyyy', { locale: idLocale })}`;
+            } else if (params.endDate) { // "sampai tanggal Y"
+                start = new Date(0); // From beginning of time (or a very early date)
+                end = parse(params.endDate, 'yyyy-MM-dd', now);
+                title = `Laporan Keterlambatan hingga ${format(end, 'd MMMM yyyy', { locale: idLocale })}`;
+            } else if (params.relativePeriod) {
+                switch (params.relativePeriod) {
+                    case 'today':
+                        start = end = now;
+                        title = `Laporan Keterlambatan - ${format(now, 'd MMMM yyyy', { locale: idLocale })}`;
+                        break;
+                    case 'yesterday':
+                        const yesterday = subDays(now, 1);
+                        start = end = yesterday;
+                        title = `Laporan Keterlambatan - ${format(yesterday, 'd MMMM yyyy', { locale: idLocale })}`;
+                        break;
+                    case 'last_week':
+                        start = startOfWeek(subDays(now, 7), { weekStartsOn: 1 }); // Senin sebagai awal minggu
+                        end = endOfWeek(subDays(now, 7), { weekStartsOn: 1 });
+                        title = `Laporan Keterlambatan Mingguan (${format(start, 'd MMM', { locale: idLocale })} - ${format(end, 'd MMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'this_month':
+                        start = startOfMonth(now);
+                        end = endOfMonth(now);
+                        title = `Laporan Keterlambatan Bulanan - ${format(now, 'MMMM yyyy', { locale: idLocale })}`;
+                        break;
+                    case 'all_data':
+                        start = new Date(0); // Epoch time
+                        end = now;
+                        title = `Semua Data Keterlambatan`;
+                        break;
+                    case 'last_monday':
+                        start = previousMonday(now);
+                        end = start; // Only for that day
+                        title = `Laporan Keterlambatan - Senin (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'last_tuesday':
+                        start = previousTuesday(now);
+                        end = start;
+                        title = `Laporan Keterlambatan - Selasa (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'last_wednesday':
+                        start = previousWednesday(now);
+                        end = start;
+                        title = `Laporan Keterlambatan - Rabu (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'last_thursday':
+                        start = previousThursday(now);
+                        end = start;
+                        title = `Laporan Keterlambatan - Kamis (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'last_friday':
+                        start = previousFriday(now);
+                        end = start;
+                        title = `Laporan Keterlambatan - Jumat (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'last_saturday':
+                        start = previousSaturday(now);
+                        end = start;
+                        title = `Laporan Keterlambatan - Sabtu (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    case 'last_sunday':
+                        start = previousSunday(now);
+                        end = start;
+                        title = `Laporan Keterlambatan - Minggu (${format(start, 'd MMMM yyyy', { locale: idLocale })})`;
+                        break;
+                    default:
+                        // If relativePeriod is not recognized, default to all data or null
+                        start = new Date(0);
+                        end = now;
+                        title = `Semua Data Keterlambatan`;
+                        break;
+                }
+            } else {
+                // If no specific date or relative period, return null or default to all data
+                // For now, default to all data if no valid range is determined
+                start = new Date(0);
+                end = now;
+                title = `Semua Data Keterlambatan`;
+            }
+
+            if (start && end) {
+                // Normalize start and end to start/end of day to ensure full day is included
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+            }
+
+            return { start, end, title };
         }
 
+        /**
+         * Menampilkan hasil data dalam format tabel di jendela chat.
+         * @param {Array<Object>} results - Data yang akan ditampilkan.
+         * @param {string} title - Judul laporan.
+         */
         function displayResultsInChat(results, title) {
             let content;
             if (results.length === 0) {
-                content = `<p>Tidak ada data untuk <strong>${title}</strong>.</p>`;
+                content = `<p>Tidak ditemukan data untuk periode/filter: <strong>${title.replace('Laporan Keterlambatan - ', '')}</strong></p>`;
             } else {
-                const tableHTML = `<div class="overflow-x-auto"><table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${results.map(row => `<tr>${headers.map(h => `<td>${row[h]}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="mt-4 flex gap-2"><button data-type="pdf" class="chat-download-btn">Unduh PDF</button><button data-type="excel" class="chat-download-btn">Unduh Excel</button></div>`;
-                content = `<p>Ditemukan ${results.length} data untuk <strong>${title}</strong>:</p>${tableHTML}`;
+                const tableHTML = `
+                    <p>Ditemukan ${results.length} data untuk <strong>${title.replace('Laporan Keterlambatan - ', '')}</strong>:</p>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                            <tbody>${results.map(row => `<tr>${headers.map(h => `<td>${row[h]}</td>`).join('')}</tr>`).join('')}</tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button data-type="pdf" class="download-btn-chat pdf">Unduh PDF</button>
+                        <button data-type="excel" class="download-btn-chat excel">Unduh Excel</button>
+                    </div>
+                `;
+                content = tableHTML;
             }
-            const bubble = addBotMessage(content, true);
-            bubble.querySelectorAll('.chat-download-btn').forEach(button => {
+            const bubble = addChatMessage('bot chat-bubble', content);
+            // Tambahkan event listener ke tombol download yang baru dibuat di dalam chat
+            bubble.querySelectorAll('.download-btn-chat').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const type = e.currentTarget.dataset.type;
                     if (type === 'pdf') generatePDF(results, title);
@@ -376,52 +564,234 @@
                 });
             });
         }
-        
-        function generatePDF(data, title) {
+
+        /**
+         * Menampilkan grafik di jendela chat.
+         * @param {Array<Object>} data - Data mentah untuk grafik.
+         * @param {string} chartType - Tipe grafik ('bar', 'pie', 'line').
+         * @param {string} chartDimension - Dimensi untuk mengelompokkan data (e.g., 'Kelas', 'Nama').
+         * @param {string} title - Judul grafik.
+         */
+        function displayChartInChat(data, chartType, chartDimension, title) {
+            if (!headers.includes(chartDimension)) {
+                addChatMessage('bot', `Maaf, dimensi "${chartDimension}" tidak ditemukan di data. Mohon gunakan salah satu dari: ${headers.join(', ')}.`);
+                return;
+            }
+
+            // Agregasi data
+            const aggregatedData = {};
+            data.forEach(row => {
+                const dimensionValue = row[chartDimension] || 'Tidak Diketahui';
+                aggregatedData[dimensionValue] = (aggregatedData[dimensionValue] || 0) + 1;
+            });
+
+            const labels = Object.keys(aggregatedData);
+            const values = Object.values(aggregatedData);
+
+            if (labels.length === 0) {
+                addChatMessage('bot', `Tidak ada data yang cukup untuk membuat grafik ${chartType} berdasarkan ${chartDimension} untuk periode ini.`);
+                return;
+            }
+
+            const chartId = `chart-${Date.now()}`;
+            const content = `
+                <p>Berikut adalah grafik <strong>${chartType}</strong> keterlambatan berdasarkan <strong>${chartDimension}</strong> untuk <strong>${title.replace('Laporan Keterlambatan - ', '')}</strong>:</p>
+                <div class="chart-container">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+            `;
+            const bubble = addChatMessage('bot chat-bubble', content);
+
+            // Pastikan canvas sudah ada di DOM sebelum inisialisasi Chart.js
+            setTimeout(() => {
+                const ctx = document.getElementById(chartId)?.getContext('2d');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: chartType,
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: `Jumlah Keterlambatan per ${chartDimension}`,
+                                data: values,
+                                backgroundColor: chartType === 'pie' ? [
+                                    'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
+                                    'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
+                                    'rgba(199, 199, 199, 0.8)', 'rgba(83, 102, 255, 0.8)', 'rgba(255, 99, 255, 0.8)'
+                                ] : 'rgba(5, 150, 105, 0.8)', // emerald-600
+                                borderColor: chartType === 'pie' ? [
+                                    'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
+                                    'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)', 'rgba(255, 99, 255, 1)'
+                                ] : 'rgba(5, 150, 105, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: chartType === 'pie' || labels.length > 5, // Tampilkan legend untuk pie atau jika banyak label
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Keterlambatan per ${chartDimension} (${title.replace('Laporan Keterlambatan - ', '')})`,
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    display: chartType !== 'pie' // Sembunyikan sumbu Y untuk pie chart
+                                },
+                                x: {
+                                    display: chartType !== 'pie' // Sembunyikan sumbu X untuk pie chart
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100); // Sedikit delay untuk memastikan DOM dirender
+        }
+
+        // --- FUNGSI UNDUH (PDF & EXCEL) ---
+
+        /**
+         * Menghasilkan file PDF dari data tabel.
+         * @param {Array<Object>} data - Data yang akan diunduh.
+         * @param {string} reportTitle - Judul laporan untuk PDF.
+         */
+        function generatePDF(data, reportTitle) {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'portrait' });
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.text(title, 14, 22);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
+            const doc = new jsPDF();
+            const downloadDate = format(new Date(), 'd MMMM yyyy, HH:mm', { locale: idLocale });
+            
+            doc.setFontSize(18);
+            doc.text(reportTitle, 14, 22);
+            doc.setFontSize(11);
             doc.setTextColor(100);
-            doc.text(`Dibuat pada: ${format(new Date(), 'd MMMM yyyy, HH:mm')}`, 14, 28);
-            const tableData = data.map(row => headers.map(h => row[h] || ''));
-            doc.autoTable({ head: [headers], body: tableData, startY: 35, theme: 'grid', headStyles: { fillColor: [49, 46, 129] }, styles: { fontSize: 8 } });
-            doc.save(`${title.replace(/ /g, '_')}.pdf`);
+            doc.text(`Dibuat pada: ${downloadDate}`, 14, 30);
+
+            const tableData = data.map(row => headers.map(h => row[h]));
+            
+            doc.autoTable({
+                head: [headers],
+                body: tableData,
+                startY: 35,
+                theme: 'grid',
+                headStyles: { fillColor: [5, 150, 105] }, // emerald-600
+                styles: { font: 'Inter', fontStyle: 'normal' },
+                didDrawPage: function (data) {
+                    // Footer
+                    let str = "Halaman " + doc.internal.getNumberOfPages();
+                    doc.setFontSize(10);
+                    doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                }
+            });
+            
+            doc.save(`${reportTitle.replace(/ /g, '_')}_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
         }
 
-        function generateExcel(data, title) {
-            const wsData = data.map(row => { let newRow = {}; headers.forEach(h => { newRow[h] = row[h] || ''; }); return newRow; });
-            const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
+        /**
+         * Menghasilkan file Excel dari data tabel.
+         * @param {Array<Object>} data - Data yang akan diunduh.
+         * @param {string} reportTitle - Judul laporan untuk Excel.
+         */
+        function generateExcel(data, reportTitle) {
+            const downloadDate = format(new Date(), 'd MMMM yyyy, HH:mm', { locale: idLocale });
+            
+            // Buat worksheet dari data
+            const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+            
+            // Tambahkan kop (judul laporan dan tanggal unduh) di atas data
+            XLSX.utils.sheet_add_aoa(ws, [[reportTitle]], { origin: 'A1' });
+            XLSX.utils.sheet_add_aoa(ws, [[`Dibuat pada: ${downloadDate}`]], { origin: 'A2' });
+
+            // Sesuaikan range data agar dimulai setelah kop
+            const originalRange = XLSX.utils.decode_range(ws['!ref']);
+            const newRange = {
+                s: { r: originalRange.s.r + 2, c: originalRange.s.c },
+                e: { r: originalRange.e.r + 2, c: originalRange.e.c }
+            };
+            ws['!ref'] = XLSX.utils.encode_range(newRange);
+
+            // Pindahkan data ke posisi baru (baris 3)
+            const newData = {};
+            for (const cellAddress in ws) {
+                if (cellAddress.startsWith('!')) continue;
+                const cell = XLSX.utils.decode_cell(cellAddress);
+                if (cell.r >= originalRange.s.r) {
+                    const newCellAddress = XLSX.utils.encode_cell({ r: cell.r + 2, c: cell.c });
+                    newData[newCellAddress] = ws[cellAddress];
+                }
+            }
+            // Tambahkan header lama ke baris 3
+            headers.forEach((h, i) => {
+                const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
+                newData[cellAddress] = { v: h, t: 's' };
+            });
+
+            // Ganti ws dengan newData
+            for (const key in ws) { delete ws[key]; }
+            Object.assign(ws, newData);
+            
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan");
-            XLSX.writeFile(wb, `${title.replace(/ /g, '_')}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Keterlambatan");
+            XLSX.writeFile(wb, `${reportTitle.replace(/ /g, '_')}_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
         }
+        
+        // --- HELPER & EVENT LISTENERS ---
 
-        function addMessageToChat(type, message, isHtml = false) {
+        /**
+         * Menambahkan pesan ke jendela chat.
+         * @param {string} type - Tipe pesan ('user' atau 'bot' atau 'bot chat-bubble').
+         * @param {string} message - Konten pesan (bisa HTML).
+         * @returns {HTMLElement} Elemen div pesan yang baru dibuat.
+         */
+        function addChatMessage(type, message) {
             const messageDiv = document.createElement('div');
-            const baseClasses = 'p-3 rounded-xl max-w-lg mb-3 shadow-sm slide-in-up';
-            let specificClasses = '';
-            if (type === 'user') specificClasses = 'bg-indigo-600 text-white ml-auto';
-            else if (type === 'bot') specificClasses = 'bg-white text-gray-800 mr-auto border border-gray-200';
-            else if (type === 'typing') { specificClasses = 'bg-gray-200 mr-auto typing-indicator'; message = '<span></span><span></span><span></span>'; }
-            else if (type === 'actions') specificClasses = 'bg-transparent mr-auto w-full';
-            messageDiv.className = `${baseClasses} ${specificClasses}`;
-            if (isHtml || type === 'typing' || type === 'actions') messageDiv.innerHTML = message;
-            else messageDiv.textContent = message;
-            if (type === 'typing') messageDiv.id = 'typing-indicator';
+            messageDiv.className = `p-3 rounded-lg max-w-xl mb-2 fade-in ${type.includes('user') ? 'bg-emerald-600 text-white ml-auto' : 'bg-slate-200 text-slate-800 mr-auto'}`;
+            if (type.includes('chat-bubble')) messageDiv.classList.add('chat-bubble');
+            messageDiv.innerHTML = message;
             chatWindow.appendChild(messageDiv);
             chatWindow.scrollTop = chatWindow.scrollHeight;
             return messageDiv;
         }
 
-        function addUserMessage(message) { addMessageToChat('user', message); }
-        function addBotMessage(message, isHtml = false) { return addMessageToChat('bot', message, isHtml); }
-        function addTypingIndicator() { addMessageToChat('typing', ''); }
-        function removeTypingIndicator() { const indicator = document.getElementById('typing-indicator'); if (indicator) indicator.remove(); }
-        function handleError(element, message) { element.innerHTML = `<div class="text-center py-6">${message}</div>`; }
+        /**
+         * Menampilkan pesan kesalahan di elemen tertentu.
+         * @param {HTMLElement} element - Elemen DOM untuk menampilkan pesan.
+         * @param {string} message - Pesan kesalahan.
+         */
+        function handleError(element, message) {
+            element.innerHTML = `<div class="text-center py-6 text-red-600">${message}</div>`;
+        }
+        
+        // Event listener untuk tombol download di tabel atas
+        document.querySelectorAll('#today-download-buttons .download-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const type = e.currentTarget.dataset.type;
+                const today = new Date();
+                const todayData = allStudentData.filter(d => isSameDay(d.dateObject, today));
+                const title = `Laporan Keterlambatan - ${format(today, 'd MMMM yyyy', { locale: idLocale })}`;
+                if (type === 'pdf') generatePDF(todayData, title);
+                if (type === 'excel') generateExcel(todayData, title);
+            });
+        });
+
+        searchBtn.addEventListener('click', handleSearch);
+        searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
+
+        // Inisialisasi saat window dimuat
+        window.addEventListener('load', () => {
+            document.getElementById('current-date').textContent = format(new Date(), 'EEEE, d MMMM yyyy', { locale: idLocale });
+            loadData();
+            addChatMessage('bot', "Halo! Saya Asisten Data Anda. Saya bisa membantu Anda menganalisis data keterlambatan siswa. Coba tanyakan: <strong>'data keterlambatan minggu lalu'</strong>, <strong>'hari Senin'</strong>, <strong>'dari tanggal 10 Juli 2024'</strong>, <strong>'grafik keterlambatan per kelas bulan ini'</strong>, atau <strong>'berapa siswa yang terlambat hari ini'</strong>.");
+            lucide.createIcons(); // Render semua ikon Lucide
+        });
     </script>
 </body>
 </html>
