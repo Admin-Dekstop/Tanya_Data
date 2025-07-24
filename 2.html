@@ -96,7 +96,6 @@
             border-radius: 99px; position: absolute; bottom: 2px; transition: all 0.3s ease;
         }
 
-        /* Gaya untuk Daftar Peringkat Siswa */
         .rank-item .rank-icon {
             width: 32px; height: 32px;
             border-radius: 50%;
@@ -153,8 +152,8 @@
             <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
                 <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page-content">
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <!-- Kolom Kiri: Grafik -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+                        <!-- Kolom Kiri: Grafik Kelas -->
                         <div class="lg:col-span-3 card p-4 md:p-6 rounded-2xl">
                             <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2">
                                 <i data-lucide="bar-chart-3" class="text-indigo-400"></i>Keterlambatan per Kelas
@@ -166,10 +165,15 @@
                              <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2">
                                 <i data-lucide="award" class="text-yellow-400"></i>Paling Sering Terlambat
                             </h3>
-                            <div id="top-students-container" class="space-y-4">
-                                <!-- Konten Peringkat Siswa akan dirender di sini oleh JS -->
-                            </div>
+                            <div id="top-students-container" class="space-y-4"></div>
                         </div>
+                    </div>
+                    <!-- Baris Baru: Grafik Tren -->
+                    <div class="card p-4 md:p-6 rounded-2xl">
+                        <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2">
+                            <i data-lucide="trending-up" class="text-green-400"></i>Keterlambatan 7 Hari Terakhir!!
+                        </h3>
+                        <div id="trend-chart-container" class="h-80"></div>
                     </div>
                 </div>
 
@@ -199,7 +203,7 @@
                                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Filter
                             </button>
                             <button id="download-filtered-btn" class="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
-                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Laporan
+                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Data
                             </button>
                         </div>
                         <div class="overflow-x-auto">
@@ -276,7 +280,7 @@
 
 const GOOGLE_SHEETS_API_KEY = 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY';
 const SPREADSHEET_ID = '1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc';
-const GEMINI_API_KEY = 'GANTI_DENGAN_API_KEY_GEMINI_ANDA';
+const GEMINI_API_KEY = 'AIzaSyDUIijYUqNa7zrQ_m3sC44-fopxuIs7eOA';
 
 const app = {
     state: {
@@ -300,6 +304,7 @@ const app = {
         containers: {
             classChart: document.getElementById('chart-by-class-container'),
             topStudents: document.getElementById('top-students-container'),
+            trendChart: document.getElementById('trend-chart-container'), // Ditambahkan
             tableHeader: document.getElementById('table-header-row'),
             tableBody: document.getElementById('table-body'),
             chat: document.getElementById('chat-messages'),
@@ -322,7 +327,7 @@ const app = {
         downloadModal: document.getElementById('download-modal'),
         toast: { el: document.getElementById('toast'), msg: document.getElementById('toast-message') },
     },
-    charts: { byClass: null },
+    charts: { byClass: null, trendChart: null }, // Ditambahkan
     
     init() {
         this.loadTheme();
@@ -376,9 +381,28 @@ const app = {
 
         const topStudents = this.utils.getTopItems(data, 'nama').slice(0, 5);
         
+        // Proses data untuk grafik tren 7 hari
+        const trendData = { labels: [], counts: [] };
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const dateString = date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+            trendData.labels.push(dateString);
+
+            const count = data.filter(row => {
+                const rowDate = this.utils.parseDate(row.tanggal);
+                return rowDate && rowDate.getTime() === date.getTime();
+            }).length;
+            trendData.counts.push(count);
+        }
+
         this.state.analytics = {
             byClass,
             topStudents,
+            trendData, // Ditambahkan
         };
     },
     
@@ -386,6 +410,7 @@ const app = {
         this.processAnalytics(this.state.data.all);
         this.renderClassChart();
         this.renderTopStudentsList();
+        this.renderTrendChart(); // Ditambahkan
         this.renderFilters();
         this.renderTable();
         this.utils.createIcons();
@@ -394,6 +419,7 @@ const app = {
     renderSkeletons() {
         const skeletonChart = `<div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>`;
         this.dom.containers.classChart.innerHTML = skeletonChart;
+        this.dom.containers.trendChart.innerHTML = skeletonChart; // Ditambahkan
         
         let skeletonList = '';
         for (let i = 0; i < 5; i++) {
@@ -431,7 +457,6 @@ const app = {
                     label: 'Jumlah Kasus', 
                     data: sortedData.map(d => d[1]), 
                     backgroundColor: gradient,
-                    borderColor: 'rgba(59, 130, 246, 1)',
                     borderWidth: 0, 
                     borderRadius: { topLeft: 6, topRight: 6 },
                     barThickness: 20,
@@ -468,6 +493,42 @@ const app = {
                 </div>
             `;
         }).join('');
+    },
+
+    renderTrendChart() {
+        const container = this.dom.containers.trendChart;
+        container.innerHTML = '<canvas></canvas>';
+        if (this.charts.trendChart) this.charts.trendChart.destroy();
+        
+        const ctx = container.firstElementChild.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, container.offsetHeight);
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+        const data = this.state.analytics.trendData;
+        
+        this.charts.trendChart = new Chart(ctx, { 
+            type: 'line', 
+            data: { 
+                labels: data.labels, 
+                datasets: [{ 
+                    label: 'Jumlah Keterlambatan', 
+                    data: data.counts,
+                    fill: true,
+                    backgroundColor: gradient,
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#ffffff',
+                    pointHoverBackgroundColor: '#ffffff',
+                    pointHoverBorderColor: '#10b981',
+                    pointRadius: 4,
+                    pointBorderWidth: 2,
+                    tension: 0.4, // Membuat garis melengkung
+                }] 
+            }, 
+            options: this.utils.getChartOptions() 
+        });
     },
 
     renderFilters() {
@@ -545,6 +606,7 @@ const app = {
         this.utils.createIcons();
         if(!this.state.isLoading) {
             this.renderClassChart();
+            this.renderTrendChart(); // Ditambahkan
         }
     },
 
@@ -708,7 +770,7 @@ const app = {
                     y: { 
                         beginAtZero: true, 
                         ticks: { precision: 0, color: isDark ? '#94a3b8' : '#64748b' }, 
-                        grid: { display: false },
+                        grid: { color: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(226, 232, 240, 0.7)' },
                         border: { display: false }
                     }, 
                     x: { 
