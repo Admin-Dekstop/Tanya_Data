@@ -43,8 +43,11 @@
         .card { background-color: var(--bg-primary); border: 1px solid var(--border-color); }
         .menu-item.active { background-color: #334155; color: #ffffff; font-weight: 600; }
         .menu-item:not(.active):hover { background-color: #475569; }
-        .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li, .prose-dark ul { color: var(--text-primary); }
+        .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li, .prose-dark ul, .prose-dark table, .prose-dark th, .prose-dark td { color: var(--text-primary); }
+        .prose table { width: 100%; } .prose th, .prose td { border: 1px solid var(--border-color); padding: 8px; }
         #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, 0); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+        #data-table tbody tr:hover { background-color: var(--bg-secondary); }
     </style>
 </head>
 <body class="antialiased">
@@ -52,10 +55,10 @@
     <div class="flex h-screen bg-slate-100 overflow-hidden">
         <!-- Sidebar -->
         <aside id="sidebar" class="sidebar w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 z-50">
-            <div class="flex items-center justify-center h-20 border-b" style="border-color: #334155;">
+            <a href="#" id="logo-btn" class="flex items-center justify-center h-20 border-b cursor-pointer" style="border-color: #334155;">
                 <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-400"></i>
                 <h1 class="text-xl font-bold ml-2">Analitik MAX</h1>
-            </div>
+            </a>
             <nav class="flex-1 px-4 py-6 space-y-2">
                 <a href="#" data-page="dashboard" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Dasbor Utama</a>
                 <a href="#" data-page="data_explorer" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="search" class="mr-3"></i>Eksplorasi Data</a>
@@ -139,6 +142,25 @@
             </main>
         </div>
     </div>
+    
+    <!-- Download Modal -->
+    <div id="download-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="card rounded-xl w-full max-w-md shadow-2xl">
+            <div class="p-4 border-b" style="border-color: var(--border-color);">
+                <h2 class="text-xl font-bold">Konfirmasi Unduhan</h2>
+            </div>
+            <div class="p-6">
+                <label for="pdf-title-input" class="text-sm font-medium text-secondary">Judul Laporan (Kop)</label>
+                <input type="text" id="pdf-title-input" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                <p class="text-xs text-secondary mt-2">Edit judul di atas untuk mengubah kop surat pada fail PDF anda.</p>
+            </div>
+            <div class="p-4 flex justify-end gap-2 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
+                <button id="cancel-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
+                <button id="confirm-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Sahkan & Unduh</button>
+            </div>
+        </div>
+    </div>
+
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
     <div id="toast" class="fixed bottom-5 left-1/2 py-2 px-5 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500"><p id="toast-message"></p></div>
 
@@ -160,6 +182,7 @@ const app = {
     dom: {
         html: document.documentElement,
         sidebar: document.getElementById('sidebar'),
+        logoBtn: document.getElementById('logo-btn'),
         menuItems: document.querySelectorAll('.menu-item'),
         pages: document.querySelectorAll('.page-content'),
         menuToggleBtn: document.getElementById('menu-toggle-btn'),
@@ -180,12 +203,16 @@ const app = {
             filterClass: document.getElementById('filter-class'),
             filterName: document.getElementById('filter-name'),
             chat: document.getElementById('chat-input'),
+            pdfTitle: document.getElementById('pdf-title-input'),
         },
         buttons: {
             sendChat: document.getElementById('send-button'),
             resetFilter: document.getElementById('reset-filter-btn'),
             downloadFiltered: document.getElementById('download-filtered-btn'),
+            confirmDownload: document.getElementById('confirm-download-btn'),
+            cancelDownload: document.getElementById('cancel-download-btn'),
         },
+        downloadModal: document.getElementById('download-modal'),
         toast: { el: document.getElementById('toast'), msg: document.getElementById('toast-message') },
     },
     charts: { byClass: null, byReason: null },
@@ -308,13 +335,19 @@ const app = {
     },
     
     renderTable() {
+        const container = this.dom.containers.tableBody;
         this.dom.containers.tableHeader.innerHTML = this.state.headers.map(h => `<th class="px-4 py-2">${h}</th>`).join('');
-        this.dom.containers.tableBody.innerHTML = this.state.data.filtered.map(row => 
-            `<tr class="border-b" style="border-color: var(--border-color);">${this.state.headers.map(h => `<td class="px-4 py-2">${row[h.toLowerCase()]}</td>`).join('')}</tr>`
+        if (this.state.data.filtered.length === 0) {
+            container.innerHTML = `<tr><td colspan="${this.state.headers.length}" class="text-center p-8 text-secondary">Tidak ada data yang sepadan dengan tapisan anda.</td></tr>`;
+            return;
+        }
+        container.innerHTML = this.state.data.filtered.map(row => 
+            `<tr class="border-b transition-colors" style="border-color: var(--border-color);">${this.state.headers.map(h => `<td class="px-4 py-2">${row[h.toLowerCase()]}</td>`).join('')}</tr>`
         ).join('');
     },
 
     setupEventListeners() {
+        this.dom.logoBtn.addEventListener('click', (e) => { e.preventDefault(); this.loadData(); });
         this.dom.menuItems.forEach(item => item.addEventListener('click', e => { e.preventDefault(); this.switchPage(item.dataset.page); }));
         this.dom.menuToggleBtn.addEventListener('click', () => this.toggleSidebar());
         this.dom.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
@@ -322,7 +355,9 @@ const app = {
         this.dom.buttons.sendChat.addEventListener('click', () => this.handleChatSubmit());
         this.dom.inputs.chat.addEventListener('keypress', e => e.key === 'Enter' && this.handleChatSubmit());
         this.dom.buttons.resetFilter.addEventListener('click', () => this.resetFilters());
-        this.dom.buttons.downloadFiltered.addEventListener('click', () => this.handlePdfDownload());
+        this.dom.buttons.downloadFiltered.addEventListener('click', () => this.showDownloadModal());
+        this.dom.buttons.cancelDownload.addEventListener('click', () => this.toggleDownloadModal(false));
+        this.dom.buttons.confirmDownload.addEventListener('click', () => this.handlePdfDownload());
         Object.values(this.dom.inputs).filter(el => typeof el === 'object' && el.id?.startsWith('filter')).forEach(el => el.addEventListener('input', () => this.applyFilters()));
     },
 
@@ -383,21 +418,37 @@ const app = {
         this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
     },
 
-    handlePdfDownload() {
+    showDownloadModal() {
         if (this.state.data.filtered.length === 0) {
             this.showToast('Tidak ada data untuk diunduh.', 3000);
             return;
         }
+        const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        this.dom.inputs.pdfTitle.value = `Laporan Keterlambatan - ${today}`;
+        this.toggleDownloadModal(true);
+    },
+
+    toggleDownloadModal(show) {
+        this.dom.downloadModal.classList.toggle('hidden', !show);
+    },
+
+    handlePdfDownload() {
+        const customTitle = this.dom.inputs.pdfTitle.value.trim();
+        if (!customTitle) {
+            this.showToast('Judul laporan tidak boleh kosong.', 3000);
+            return;
+        }
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const title = `Laporan Keterlambatan (Hasil Filter)`;
-        doc.setFontSize(18); doc.text(title, 14, 22);
+        doc.setFontSize(18); doc.text(customTitle, 14, 22);
         
         const bodyData = this.state.data.filtered.map(row => this.state.headers.map(h => row[h.toLowerCase()]));
         doc.autoTable({ head: [this.state.headers], body: bodyData, startY: 30, theme: 'grid' });
         
-        doc.save(`Laporan_Filter_${Date.now()}.pdf`);
+        doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
         this.showToast('Laporan PDF sedang dibuat...', 2000);
+        this.toggleDownloadModal(false);
     },
 
     async handleChatSubmit() {
@@ -420,8 +471,9 @@ const app = {
             PERATURAN FORMAT JAWAPAN (WAJIB DIPATUHI):
             1.  **Gunakan Markdown:** Sentiasa gunakan Markdown untuk memformat jawapan anda.
             2.  **Struktur Jawapan:** Mulakan dengan ringkasan pendek, diikuti dengan butiran dalam bentuk senarai berpoin (\`-\`) atau bernombor (\`1.\`). Gunakan teks **tebal** untuk menonjolkan metrik atau nama penting.
-            3.  **Nada Profesional & Membantu:** Gunakan bahasa yang mudah difahami tetapi tetap profesional. Sapa pengguna dengan baik.
-            4.  **Fokus Pada Data:** Setiap jawapan mesti berdasarkan data yang dilampirkan di bawah. Jika soalan tidak boleh dijawab dengan data yang ada, nyatakan dengan sopan.
+            3.  **Jadual untuk Data Banyak:** Jika anda perlu menyenaraikan lebih daripada 5 item (contohnya, senarai pelajar), gunakan **Markdown Table** yang kemas.
+            4.  **Nada Profesional & Membantu:** Gunakan bahasa yang mudah difahami tetapi tetap profesional. Sapa pengguna dengan baik.
+            5.  **Fokus Pada Data:** Setiap jawapan mesti berdasarkan data yang dilampirkan di bawah. Jika soalan tidak boleh dijawab dengan data yang ada, nyatakan dengan sopan.
 
             CONTOH JAWAPAN YANG BAIK:
             "Tentu, berdasarkan data yang ada:
