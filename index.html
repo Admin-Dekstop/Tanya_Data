@@ -28,83 +28,118 @@
 
     <style>
         :root {
-            --bg-primary: #ffffff; --bg-secondary: #f1f5f9;
-            --text-primary: #1e293b; --text-secondary: #64748b;
+            --bg-primary: #ffffff; --bg-secondary: #f1f5f9; --bg-sidebar: #1e293b;
+            --text-primary: #1e293b; --text-secondary: #64748b; --text-on-sidebar: #e2e8f0;
             --border-color: #e2e8f0; --accent-color: #3b82f6;
         }
         [data-theme='dark'] {
-            --bg-primary: #1e293b; --bg-secondary: #0f172a;
-            --text-primary: #e2e8f0; --text-secondary: #94a3b8;
+            --bg-primary: #1e293b; --bg-secondary: #0f172a; --bg-sidebar: #0f172a;
+            --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-on-sidebar: #e2e8f0;
             --border-color: #334155; --accent-color: #60a5fa;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-secondary); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
+        .sidebar { background-color: var(--bg-sidebar); color: var(--text-on-sidebar); }
+        .main-content { background-color: var(--bg-secondary); }
         .card { background-color: var(--bg-primary); border: 1px solid var(--border-color); }
+        .menu-item.active { background-color: #334155; color: #ffffff; font-weight: 600; }
+        .menu-item:not(.active):hover { background-color: #475569; }
         .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li { color: var(--text-primary); }
         #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, 0); }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
     </style>
 </head>
 <body class="antialiased">
 
-    <div class="flex flex-col h-screen">
-        <!-- Top Bar -->
-        <header class="flex-shrink-0 flex justify-between items-center p-4 shadow-md card border-t-0 border-x-0 rounded-none z-20">
-            <div class="flex items-center gap-4">
-                <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-500"></i>
-                <h1 class="text-xl font-bold hidden sm:block">Dasbor Analitik MAX</h1>
+    <div class="flex h-screen bg-slate-100 overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 z-50">
+            <div class="flex items-center justify-center h-20 border-b" style="border-color: #334155;">
+                <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-400"></i>
+                <h1 class="text-xl font-bold ml-2">Analitik MAX</h1>
             </div>
-            <div class="flex items-center gap-2">
-                <button id="dashboard-btn" title="Dasbor" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-secondary"><i data-lucide="layout-dashboard" class="h-5 w-5"></i></button>
-                <button id="chat-btn" title="Analis AI" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-secondary"><i data-lucide="brain-circuit" class="h-5 w-5"></i></button>
-                <button id="download-btn" title="Unduh Data Difilter" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-secondary"><i data-lucide="download" class="h-5 w-5"></i></button>
-                <div class="border-l h-6 mx-2" style="border-color: var(--border-color);"></div>
-                <button id="theme-toggle-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-secondary"><i data-lucide="sun" class="h-5 w-5"></i></button>
-            </div>
-        </header>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" data-page="dashboard" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Dasbor Utama</a>
+                <a href="#" data-page="data_explorer" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="search" class="mr-3"></i>Eksplorasi Data</a>
+                <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Analis AI</a>
+            </nav>
+        </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto p-6 md:p-8">
-            <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-                <div class="lg:col-span-3 card p-6 rounded-xl"><h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i data-lucide="users-2" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
-                <div class="lg:col-span-2 card p-6 rounded-xl"><h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Alasan Keterlambatan</h3><div id="chart-by-reason-container" class="h-80"></div></div>
-            </div>
+        <div class="flex-1 flex flex-col overflow-hidden main-content">
+            <!-- Top bar -->
+            <header class="flex justify-between items-center p-4 shadow-md card border-t-0 border-x-0 rounded-none">
+                <button id="menu-toggle-btn" class="text-secondary hover:text-primary"><i data-lucide="menu" class="h-6 w-6"></i></button>
+                <div id="page-title" class="font-bold text-lg">Dasbor Utama</div>
+                <button id="theme-toggle-btn" class="text-secondary hover:text-primary"><i data-lucide="sun" class="h-6 w-6"></i></button>
+            </header>
 
-            <div class="card p-6 rounded-xl">
-                <h2 class="text-xl font-bold mb-4">Detail Data Keterlambatan</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <input type="text" id="filter-name" placeholder="Cari nama siswa..." class="p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
-                    <input type="date" id="filter-date" class="p-2 border rounded-lg bg-transparent" style="border-color: var(--border-color);">
-                    <select id="filter-class" class="p-2 border rounded-lg bg-transparent" style="border-color: var(--border-color);"></select>
+            <!-- Content Area -->
+            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-6 md:p-8">
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-content">
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-6">Ringkasan Analitik Keseluruhan</h1>
+                    <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+                        <div class="lg:col-span-3 card p-6 rounded-xl"><h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i data-lucide="users-2" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
+                        <div class="lg:col-span-2 card p-6 rounded-xl"><h3 class="font-bold text-xl mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="text-amber-400"></i>Alasan Keterlambatan</h3><div id="chart-by-reason-container" class="h-80"></div></div>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left" id="data-table">
-                        <thead class="text-xs uppercase" style="background-color: var(--bg-secondary);"><tr id="table-header-row"></tr></thead>
-                        <tbody id="table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
 
-    <!-- AI Chat Modal -->
-    <div id="chat-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
-        <div class="card rounded-xl flex flex-col w-full max-w-2xl h-full max-h-[90vh] shadow-2xl">
-            <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--border-color);">
-                <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="bot" class="text-purple-400"></i>Analis AI Gemini</h2>
-                <button id="close-chat-btn" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="x" class="h-5 w-5"></i></button>
-            </div>
-            <div id="chat-messages" class="flex-grow p-4 overflow-y-auto"></div>
-            <div class="p-4 border-t" style="border-color: var(--border-color);">
-                <div class="flex items-center">
-                    <input type="text" id="chat-input" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 bg-transparent" style="border-color: var(--border-color); --tw-ring-color: var(--accent-color);" placeholder="Tanya apa saja tentang data...">
-                    <button id="send-button" class="font-bold p-2.5 rounded-r-lg flex items-center justify-center text-white" style="background-color: var(--accent-color);"><i data-lucide="send" class="h-5 w-5"></i></button>
+                <!-- Data Explorer Page -->
+                <div id="page-data_explorer" class="page-content hidden">
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-6">Eksplorasi & Filter Data Terperinci</h1>
+                    <div class="card p-6 rounded-xl">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label for="filter-start-date" class="text-sm font-medium text-secondary">Dari Tanggal</label>
+                                <input type="date" id="filter-start-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div>
+                                <label for="filter-end-date" class="text-sm font-medium text-secondary">Hingga Tanggal</label>
+                                <input type="date" id="filter-end-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div>
+                                <label for="filter-class" class="text-sm font-medium text-secondary">Kelas</label>
+                                <select id="filter-class" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);"></select>
+                            </div>
+                            <div>
+                                <label for="filter-name" class="text-sm font-medium text-secondary">Nama Siswa</label>
+                                <input type="text" id="filter-name" placeholder="Cari nama..." class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 mb-6">
+                            <button id="reset-filter-btn" class="flex items-center gap-2 bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">
+                                <i data-lucide="rotate-ccw"></i> Reset
+                            </button>
+                            <button id="download-filtered-btn" class="flex items-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
+                                <i data-lucide="download"></i> Unduh Hasil Filter
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left" id="data-table">
+                                <thead class="text-xs uppercase" style="background-color: var(--bg-secondary);"><tr id="table-header-row"></tr></thead>
+                                <tbody id="table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <!-- AI Analyst Page -->
+                <div id="page-ai_analyst" class="page-content hidden h-full">
+                    <div class="card rounded-xl flex flex-col h-full">
+                        <div class="p-4 border-b flex items-center gap-2" style="border-color: var(--border-color);"><i data-lucide="bot" class="text-purple-400"></i><h2 class="text-xl font-bold">Analis AI Gemini (Semua Data)</h2></div>
+                        <div id="chat-messages" class="flex-grow p-4 overflow-y-auto"></div>
+                        <div class="p-4 border-t" style="border-color: var(--border-color);">
+                            <div class="flex items-center">
+                                <input type="text" id="chat-input" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 bg-transparent" style="border-color: var(--border-color); --tw-ring-color: var(--accent-color);" placeholder="Contoh: Bandingkan tren kelas 10A dan 11B...">
+                                <button id="send-button" class="font-bold p-2.5 rounded-r-lg flex items-center justify-center text-white" style="background-color: var(--accent-color);"><i data-lucide="send" class="h-5 w-5"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
-
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
     <div id="toast" class="fixed bottom-5 left-1/2 py-2 px-5 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500"><p id="toast-message"></p></div>
 
 <script>
@@ -121,11 +156,16 @@ const app = {
         data: { all: [], filtered: [] },
         analytics: {},
         headers: [],
-        headerMap: {},
     },
     dom: {
         html: document.documentElement,
+        sidebar: document.getElementById('sidebar'),
+        menuItems: document.querySelectorAll('.menu-item'),
+        pages: document.querySelectorAll('.page-content'),
+        menuToggleBtn: document.getElementById('menu-toggle-btn'),
         themeToggleBtn: document.getElementById('theme-toggle-btn'),
+        sidebarOverlay: document.getElementById('sidebar-overlay'),
+        pageTitle: document.getElementById('page-title'),
         containers: {
             kpi: document.getElementById('kpi-cards-container'),
             classChart: document.getElementById('chart-by-class-container'),
@@ -135,19 +175,17 @@ const app = {
             chat: document.getElementById('chat-messages'),
         },
         inputs: {
-            filterName: document.getElementById('filter-name'),
-            filterDate: document.getElementById('filter-date'),
+            filterStart: document.getElementById('filter-start-date'),
+            filterEnd: document.getElementById('filter-end-date'),
             filterClass: document.getElementById('filter-class'),
+            filterName: document.getElementById('filter-name'),
             chat: document.getElementById('chat-input'),
         },
         buttons: {
-            dashboard: document.getElementById('dashboard-btn'),
-            chat: document.getElementById('chat-btn'),
-            download: document.getElementById('download-btn'),
             sendChat: document.getElementById('send-button'),
-            closeChat: document.getElementById('close-chat-btn'),
+            resetFilter: document.getElementById('reset-filter-btn'),
+            downloadFiltered: document.getElementById('download-filtered-btn'),
         },
-        chatModal: document.getElementById('chat-modal'),
         toast: { el: document.getElementById('toast'), msg: document.getElementById('toast-message') },
     },
     charts: { byClass: null, byReason: null },
@@ -178,7 +216,6 @@ const app = {
             if (!rows || rows.length < 2) throw new Error('Data tidak ditemukan.');
 
             this.state.headers = rows[0];
-            this.state.headerMap = this.state.headers.reduce((acc, h, i) => ({ ...acc, [h.toLowerCase()]: i }), {});
             
             this.state.data.all = rows.slice(1).map(row => {
                 const obj = {};
@@ -186,7 +223,8 @@ const app = {
                 return obj;
             }).filter(row => row.tanggal);
 
-            this.applyFilters(); // Initial filter and render
+            this.state.data.filtered = [...this.state.data.all];
+            this.renderAll();
             this.showToast('Data berhasil dimuat!', 2000);
         } catch (error) {
             this.showToast(`Gagal memuat data: ${error.message}`, 5000);
@@ -196,8 +234,7 @@ const app = {
         }
     },
 
-    processAnalytics() {
-        const data = this.state.data.filtered; // Process based on filtered data
+    processAnalytics(data) {
         const byClass = {};
         const byReason = {};
         
@@ -223,7 +260,7 @@ const app = {
     },
     
     renderAll() {
-        this.processAnalytics();
+        this.processAnalytics(this.state.data.all); // Process all data for dashboard
         this.renderKpiCards();
         this.renderClassChart();
         this.renderReasonChart();
@@ -249,7 +286,6 @@ const app = {
     },
 
     renderClassChart() {
-        // ... (same as previous version)
         const container = this.dom.containers.classChart;
         container.innerHTML = '<canvas></canvas>';
         if (this.charts.byClass) this.charts.byClass.destroy();
@@ -259,7 +295,6 @@ const app = {
     },
 
     renderReasonChart() {
-        // ... (same as previous version)
         const container = this.dom.containers.reasonChart;
         container.innerHTML = '<canvas></canvas>';
         if (this.charts.byReason) this.charts.byReason.destroy();
@@ -280,43 +315,72 @@ const app = {
     },
 
     setupEventListeners() {
+        this.dom.menuItems.forEach(item => item.addEventListener('click', e => { e.preventDefault(); this.switchPage(item.dataset.page); }));
+        this.dom.menuToggleBtn.addEventListener('click', () => this.toggleSidebar());
+        this.dom.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
         this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
-        this.dom.buttons.dashboard.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-        this.dom.buttons.chat.addEventListener('click', () => this.toggleChatModal(true));
-        this.dom.buttons.closeChat.addEventListener('click', () => this.toggleChatModal(false));
-        this.dom.buttons.download.addEventListener('click', () => this.handlePdfDownload());
         this.dom.buttons.sendChat.addEventListener('click', () => this.handleChatSubmit());
         this.dom.inputs.chat.addEventListener('keypress', e => e.key === 'Enter' && this.handleChatSubmit());
-        [this.dom.inputs.filterName, this.dom.inputs.filterDate, this.dom.inputs.filterClass].forEach(el => el.addEventListener('input', () => this.applyFilters()));
+        this.dom.buttons.resetFilter.addEventListener('click', () => this.resetFilters());
+        this.dom.buttons.downloadFiltered.addEventListener('click', () => this.handlePdfDownload());
+        Object.values(this.dom.inputs).filter(el => typeof el === 'object' && el.id?.startsWith('filter')).forEach(el => el.addEventListener('input', () => this.applyFilters()));
+    },
+
+    switchPage(pageId) {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        document.getElementById(`page-${pageId}`).classList.remove('hidden');
+        this.dom.menuItems.forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
+        this.dom.pageTitle.textContent = document.querySelector(`.menu-item[data-page="${pageId}"]`).textContent;
+        if (window.innerWidth < 1024) this.toggleSidebar(false);
+    },
+
+    toggleSidebar(forceShow = null) {
+        const show = forceShow !== null ? forceShow : this.dom.sidebar.classList.contains('-translate-x-full');
+        this.dom.sidebar.classList.toggle('-translate-x-full', !show);
+        this.dom.sidebarOverlay.classList.toggle('hidden', !show);
     },
 
     toggleTheme() {
         this.state.theme = this.state.theme === 'light' ? 'dark' : 'light';
         this.dom.html.dataset.theme = this.state.theme;
         localStorage.setItem('dashboardTheme', this.state.theme);
-        this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-5 w-5"></i>`;
+        this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
         this.utils.createIcons();
         this.renderAll();
     },
 
     applyFilters() {
-        const nameFilter = this.dom.inputs.filterName.value.toLowerCase();
-        const dateFilter = this.dom.inputs.filterDate.value ? this.utils.formatDateForCompare(new Date(this.dom.inputs.filterDate.value)) : '';
+        const start = this.dom.inputs.filterStart.value ? new Date(this.dom.inputs.filterStart.value) : null;
+        const end = this.dom.inputs.filterEnd.value ? new Date(this.dom.inputs.filterEnd.value) : null;
         const classFilter = this.dom.inputs.filterClass.value;
+        const nameFilter = this.dom.inputs.filterName.value.toLowerCase();
         
+        if(start) start.setHours(0,0,0,0);
+        if(end) end.setHours(23,59,59,999);
+
         this.state.data.filtered = this.state.data.all.filter(row => {
-            const nameMatch = row.nama.toLowerCase().includes(nameFilter);
-            const dateMatch = !dateFilter || row.tanggal === dateFilter;
+            const rowDate = this.utils.parseDate(row.tanggal);
+            const dateMatch = (!start || rowDate >= start) && (!end || rowDate <= end);
             const classMatch = !classFilter || row.kelas === classFilter;
-            return nameMatch && dateMatch && classMatch;
+            const nameMatch = row.nama.toLowerCase().includes(nameFilter);
+            return dateMatch && classMatch && nameMatch;
         });
-        this.renderAll();
+        this.renderTable();
+    },
+    
+    resetFilters() {
+        this.dom.inputs.filterStart.value = '';
+        this.dom.inputs.filterEnd.value = '';
+        this.dom.inputs.filterClass.value = '';
+        this.dom.inputs.filterName.value = '';
+        this.applyFilters();
+        this.showToast('Filter telah direset.');
     },
     
     loadTheme() {
         this.state.theme = localStorage.getItem('dashboardTheme') || 'light';
         this.dom.html.dataset.theme = this.state.theme;
-        this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-5 w-5"></i>`;
+        this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
     },
 
     handlePdfDownload() {
@@ -326,7 +390,7 @@ const app = {
         }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const title = `Laporan Keterlambatan (Difilter) - ${new Date().toLocaleDateString('id-ID')}`;
+        const title = `Laporan Keterlambatan (Hasil Filter)`;
         doc.setFontSize(18); doc.text(title, 14, 22);
         
         const bodyData = this.state.data.filtered.map(row => this.state.headers.map(h => row[h.toLowerCase()]));
@@ -334,10 +398,6 @@ const app = {
         
         doc.save(`Laporan_Filter_${Date.now()}.pdf`);
         this.showToast('Laporan PDF sedang dibuat...', 2000);
-    },
-
-    toggleChatModal(show) {
-        this.dom.chatModal.classList.toggle('hidden', !show);
     },
 
     async handleChatSubmit() {
@@ -353,7 +413,7 @@ const app = {
         this.addChatMessage('...', 'bot', true);
 
         try {
-            const dataForAi = this.state.data.all.slice(0, 500);
+            const dataForAi = this.state.data.all.slice(0, 500); // Sample data
             const systemPrompt = `Anda adalah "Max", analis data AI. Jawab pertanyaan pengguna tentang data keterlambatan siswa berikut dalam format Markdown (Bahasa Indonesia). Data: ${JSON.stringify(dataForAi)}`;
             const payload = { contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nPertanyaan: "${userInput}"` }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -379,14 +439,8 @@ const app = {
         const bubble = document.createElement('div');
         bubble.className = `prose p-3 rounded-lg max-w-full ${sender === 'user' ? 'bg-blue-500 text-white' : 'card'}`;
         if (this.state.theme === 'dark' && sender === 'bot') bubble.classList.add('prose-dark');
-        
-        if (isThinking) {
-            bubble.id = 'thinking-bubble';
-            bubble.innerHTML = `<div class="flex items-center space-x-1 p-1"><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div></div>`;
-        } else {
-            bubble.innerHTML = marked.parse(text);
-        }
-
+        if (isThinking) { bubble.id = 'thinking-bubble'; bubble.innerHTML = `<div class="flex items-center space-x-1 p-1"><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div></div>`; } 
+        else { bubble.innerHTML = marked.parse(text); }
         wrapper.innerHTML = sender === 'user' ? `${bubble.outerHTML}${iconHtml}` : `${iconHtml}${bubble.outerHTML}`;
         container.appendChild(wrapper);
         container.scrollTop = container.scrollHeight;
@@ -395,16 +449,12 @@ const app = {
 
     updateLastBotMessage(newText) {
         const thinkingBubble = this.dom.containers.chat.querySelector('#thinking-bubble');
-        if (thinkingBubble) {
-            thinkingBubble.parentElement.innerHTML = marked.parse(newText);
-        }
+        if (thinkingBubble) { thinkingBubble.parentElement.innerHTML = marked.parse(newText); }
     },
 
     utils: {
         createIcons() {
-            setTimeout(() => {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }, 0);
+            setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 0);
         },
         parseDate(s) {
             if (!s || typeof s !== 'string') return null;
@@ -413,17 +463,8 @@ const app = {
             const [d, m, y] = parts.map(p => parseInt(p, 10));
             return new Date(y, m - 1, d);
         },
-        formatDateForCompare(date) {
-            const d = String(date.getDate()).padStart(2, '0');
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const y = date.getFullYear();
-            return `${d}/${m}/${y}`;
-        },
         getTopItems(data, key) {
-            const counts = data.reduce((acc, row) => {
-                acc[row[key]] = (acc[row[key]] || 0) + 1;
-                return acc;
-            }, {});
+            const counts = data.reduce((acc, row) => { acc[row[key]] = (acc[row[key]] || 0) + 1; return acc; }, {});
             return Object.entries(counts).map(([item, count]) => ({item, count})).sort((a,b) => b.count - a.count);
         },
         getChartOptions() {
