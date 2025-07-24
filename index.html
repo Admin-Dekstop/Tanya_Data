@@ -43,7 +43,7 @@
         .card { background-color: var(--bg-primary); border: 1px solid var(--border-color); }
         .menu-item.active { background-color: #334155; color: #ffffff; font-weight: 600; }
         .menu-item:not(.active):hover { background-color: #475569; }
-        .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li { color: var(--text-primary); }
+        .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li, .prose-dark ul { color: var(--text-primary); }
         #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, 0); }
     </style>
 </head>
@@ -260,7 +260,7 @@ const app = {
     },
     
     renderAll() {
-        this.processAnalytics(this.state.data.all); // Process all data for dashboard
+        this.processAnalytics(this.state.data.all);
         this.renderKpiCards();
         this.renderClassChart();
         this.renderReasonChart();
@@ -413,8 +413,27 @@ const app = {
         this.addChatMessage('...', 'bot', true);
 
         try {
-            const dataForAi = this.state.data.all.slice(0, 500); // Sample data
-            const systemPrompt = `Anda adalah "Max", analis data AI. Jawab pertanyaan pengguna tentang data keterlambatan siswa berikut dalam format Markdown (Bahasa Indonesia). Data: ${JSON.stringify(dataForAi)}`;
+            const dataForAi = this.state.data.all.slice(0, 500);
+            const systemPrompt = `Anda adalah "Max", seorang analis data AI yang sangat canggih, ramah, dan profesional. Anda berinteraksi dalam format chat yang kemas.
+            MISI UTAMA ANDA: Memberikan jawapan yang jelas, berstruktur, dan mendalam berdasarkan data keterlambatan siswa yang diberikan. JANGAN sesekali membuat andaian atau memberikan maklumat di luar data yang disediakan.
+
+            PERATURAN FORMAT JAWAPAN (WAJIB DIPATUHI):
+            1.  **Gunakan Markdown:** Sentiasa gunakan Markdown untuk memformat jawapan anda.
+            2.  **Struktur Jawapan:** Mulakan dengan ringkasan pendek, diikuti dengan butiran dalam bentuk senarai berpoin (\`-\`) atau bernombor (\`1.\`). Gunakan teks **tebal** untuk menonjolkan metrik atau nama penting.
+            3.  **Nada Profesional & Membantu:** Gunakan bahasa yang mudah difahami tetapi tetap profesional. Sapa pengguna dengan baik.
+            4.  **Fokus Pada Data:** Setiap jawapan mesti berdasarkan data yang dilampirkan di bawah. Jika soalan tidak boleh dijawab dengan data yang ada, nyatakan dengan sopan.
+
+            CONTOH JAWAPAN YANG BAIK:
+            "Tentu, berdasarkan data yang ada:
+            
+            **Analisis Keterlambatan Kelas 10A**
+            - Terdapat sejumlah **5** kes keterlambatan untuk kelas 10A.
+            - Pelajar yang paling kerap terlambat ialah **Budi** (3 kali).
+            - Alasan paling umum yang diberikan ialah **'Bangun Kesiangan'**."
+
+            Berikut adalah data keterlambatan siswa (sampel):
+            ${JSON.stringify(dataForAi)}
+            `;
             const payload = { contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nPertanyaan: "${userInput}"` }] }] };
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
             
@@ -449,7 +468,10 @@ const app = {
 
     updateLastBotMessage(newText) {
         const thinkingBubble = this.dom.containers.chat.querySelector('#thinking-bubble');
-        if (thinkingBubble) { thinkingBubble.parentElement.innerHTML = marked.parse(newText); }
+        if (thinkingBubble) { 
+            const parent = thinkingBubble.parentElement;
+            parent.innerHTML = marked.parse(newText);
+        }
     },
 
     utils: {
