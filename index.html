@@ -28,21 +28,21 @@
 
     <style>
         :root {
-            --bg-primary: #ffffff; --bg-secondary: #f1f5f9; --bg-sidebar: #1e293b;
-            --text-primary: #1e293b; --text-secondary: #64748b; --text-on-sidebar: #e2e8f0;
+            --bg-primary: #ffffff; --bg-secondary: #f1f5f9; --bg-header: #ffffff;
+            --text-primary: #1e293b; --text-secondary: #64748b;
             --border-color: #e2e8f0; --accent-color: #3b82f6;
         }
         [data-theme='dark'] {
-            --bg-primary: #1e293b; --bg-secondary: #0f172a; --bg-sidebar: #0f172a;
-            --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-on-sidebar: #e2e8f0;
+            --bg-primary: #1e293b; --bg-secondary: #0f172a; --bg-header: #1e293b;
+            --text-primary: #e2e8f0; --text-secondary: #94a3b8;
             --border-color: #334155; --accent-color: #60a5fa;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-secondary); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
-        .sidebar { background-color: var(--bg-sidebar); color: var(--text-on-sidebar); }
+        .header-bar { background-color: var(--bg-header); border-bottom: 1px solid var(--border-color); }
         .main-content { background-color: var(--bg-secondary); }
         .card { background-color: var(--bg-primary); border: 1px solid var(--border-color); }
-        .menu-item.active { background-color: #334155; color: #ffffff; font-weight: 600; }
-        .menu-item:not(.active):hover { background-color: #475569; }
+        .menu-item.active { background-color: var(--bg-secondary); color: var(--accent-color); font-weight: 600; }
+        .menu-item:not(.active):hover { background-color: var(--bg-secondary); }
         .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li, .prose-dark ul, .prose-dark table, .prose-dark th, .prose-dark td { color: var(--text-primary); }
         .prose table { width: 100%; } .prose th, .prose td { border: 1px solid var(--border-color); padding: 8px; }
         #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, 0); }
@@ -52,39 +52,56 @@
 </head>
 <body class="antialiased">
 
-    <div class="relative min-h-screen lg:flex">
-        <!-- Sidebar -->
-        <!-- The sidebar is fixed, starts off-screen on mobile, and becomes visible on large screens -->
-        <aside id="sidebar" class="sidebar w-64 flex-shrink-0 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-50">
-            <a href="#" id="logo-btn" class="flex items-center justify-center h-20 border-b cursor-pointer" style="border-color: #334155;">
-                <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-400"></i>
-                <h1 class="text-xl font-bold ml-2">Analitik MAX</h1>
-            </a>
-            <nav class="flex-1 px-4 py-6 space-y-2">
-                <a href="#" data-page="dashboard" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Dasbor Utama</a>
-                <a href="#" data-page="data_explorer" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="search" class="mr-3"></i>Eksplorasi Data</a>
-                <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-2.5 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Analis AI</a>
-            </nav>
-        </aside>
+    <div class="flex flex-col h-screen">
+        <!-- Top bar -->
+        <header class="header-bar shadow-md relative z-20">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <!-- Logo and Main Title -->
+                    <div class="flex items-center">
+                        <a href="#" id="logo-btn" class="flex items-center flex-shrink-0">
+                            <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-400"></i>
+                            <h1 class="text-xl font-bold ml-2 hidden sm:block">Analitik MAX</h1>
+                        </a>
+                    </div>
 
-        <!-- Main Content Wrapper -->
-        <!-- This wrapper gets a left margin on large screens to make space for the sidebar -->
-        <div class="flex-1 flex flex-col overflow-hidden main-content lg:ml-64">
-            <!-- Top bar -->
-            <header class="flex justify-between items-center p-4 shadow-md card border-t-0 border-x-0 rounded-none">
-                <!-- Hamburger menu button for mobile, hidden on large screens -->
-                <button id="menu-toggle-btn" class="text-secondary hover:text-primary lg:hidden">
-                    <i data-lucide="menu" class="h-6 w-6"></i>
-                </button>
-                <div id="page-title" class="font-bold text-lg">Dasbor Utama</div>
-                <button id="theme-toggle-btn" class="text-secondary hover:text-primary"><i data-lucide="sun" class="h-6 w-6"></i></button>
-            </header>
+                    <!-- Desktop Menu -->
+                    <nav class="hidden lg:flex items-center space-x-2">
+                        <a href="#" data-page="dashboard" class="menu-item flex items-center py-2 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-2 h-5 w-5"></i>Dasbor Utama</a>
+                        <a href="#" data-page="data_explorer" class="menu-item flex items-center py-2 px-4 rounded-lg transition duration-200"><i data-lucide="search" class="mr-2 h-5 w-5"></i>Eksplorasi Data</a>
+                        <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-2 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-2 h-5 w-5"></i>Analis AI</a>
+                    </nav>
 
-            <!-- Content Area -->
-            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
+                    <!-- Right side: Theme Toggle and Mobile Menu Button -->
+                    <div class="flex items-center">
+                        <button id="theme-toggle-btn" class="text-secondary hover:text-primary p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"><i data-lucide="sun" class="h-6 w-6"></i></button>
+                        <div class="lg:hidden ml-2">
+                            <button id="mobile-menu-btn" class="p-2 rounded-md text-secondary hover:text-primary hover:bg-gray-100 dark:hover:bg-slate-700">
+                                <i data-lucide="menu" class="h-6 w-6"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="lg:hidden hidden">
+                <nav class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#" data-page="dashboard" class="menu-item flex items-center py-2 px-3 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Dasbor Utama</a>
+                    <a href="#" data-page="data_explorer" class="menu-item flex items-center py-2 px-3 rounded-lg transition duration-200"><i data-lucide="search" class="mr-3"></i>Eksplorasi Data</a>
+                    <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-2 px-3 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Analis AI</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden main-content">
+             <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
+                <!-- Page Title (optional, can be removed if header is sufficient) -->
+                <h1 id="page-title" class="text-2xl md:text-3xl font-extrabold text-primary mb-6">Dasbor Utama</h1>
+                
                 <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page-content">
-                    <h1 class="text-xl md:text-2xl lg:text-3xl font-extrabold text-slate-900 mb-6">Ringkasan Analitik Keseluruhan</h1>
                     <div id="kpi-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6"></div>
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
                         <div class="lg:col-span-3 card p-4 md:p-6 rounded-xl"><h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="users-2" class="text-indigo-400"></i>Keterlambatan per Kelas</h3><div id="chart-by-class-container" class="h-80"></div></div>
@@ -94,7 +111,6 @@
 
                 <!-- Data Explorer Page -->
                 <div id="page-data_explorer" class="page-content hidden">
-                    <h1 class="text-xl md:text-2xl lg:text-3xl font-extrabold text-slate-900 mb-6">Eksplorasi & Filter Data Terperinci</h1>
                     <div class="card p-4 md:p-6 rounded-xl">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                             <div>
@@ -166,8 +182,6 @@
         </div>
     </div>
 
-    <!-- Sidebar Overlay for mobile -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
     <div id="toast" class="fixed bottom-5 left-1/2 py-2 px-5 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500"><p id="toast-message"></p></div>
 
 <script>
@@ -187,13 +201,12 @@ const app = {
     },
     dom: {
         html: document.documentElement,
-        sidebar: document.getElementById('sidebar'),
         logoBtn: document.getElementById('logo-btn'),
         menuItems: document.querySelectorAll('.menu-item'),
         pages: document.querySelectorAll('.page-content'),
-        menuToggleBtn: document.getElementById('menu-toggle-btn'),
+        mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+        mobileMenu: document.getElementById('mobile-menu'),
         themeToggleBtn: document.getElementById('theme-toggle-btn'),
-        sidebarOverlay: document.getElementById('sidebar-overlay'),
         pageTitle: document.getElementById('page-title'),
         containers: {
             kpi: document.getElementById('kpi-cards-container'),
@@ -355,8 +368,7 @@ const app = {
     setupEventListeners() {
         this.dom.logoBtn.addEventListener('click', (e) => { e.preventDefault(); this.loadData(); });
         this.dom.menuItems.forEach(item => item.addEventListener('click', e => { e.preventDefault(); this.switchPage(item.dataset.page); }));
-        this.dom.menuToggleBtn.addEventListener('click', () => this.toggleSidebar());
-        this.dom.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
+        this.dom.mobileMenuBtn.addEventListener('click', () => this.toggleMobileMenu());
         this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
         this.dom.buttons.sendChat.addEventListener('click', () => this.handleChatSubmit());
         this.dom.inputs.chat.addEventListener('keypress', e => e.key === 'Enter' && this.handleChatSubmit());
@@ -368,17 +380,23 @@ const app = {
     },
 
     switchPage(pageId) {
-        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        this.dom.pages.forEach(p => p.classList.add('hidden'));
         document.getElementById(`page-${pageId}`).classList.remove('hidden');
+        
         this.dom.menuItems.forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
-        this.dom.pageTitle.textContent = document.querySelector(`.menu-item[data-page="${pageId}"]`).textContent;
-        if (window.innerWidth < 1024) this.toggleSidebar(false);
+        
+        const pageTitleText = document.querySelector(`.menu-item[data-page="${pageId}"]`).innerText;
+        this.dom.pageTitle.textContent = pageTitleText;
+        
+        // Hide mobile menu after selection
+        if (!this.dom.mobileMenu.classList.contains('hidden')) {
+            this.toggleMobileMenu(false);
+        }
     },
 
-    toggleSidebar(forceShow = null) {
-        const show = forceShow !== null ? forceShow : this.dom.sidebar.classList.contains('-translate-x-full');
-        this.dom.sidebar.classList.toggle('-translate-x-full', !show);
-        this.dom.sidebarOverlay.classList.toggle('hidden', !show);
+    toggleMobileMenu(forceShow = null) {
+        const show = forceShow !== null ? forceShow : this.dom.mobileMenu.classList.contains('hidden');
+        this.dom.mobileMenu.classList.toggle('hidden', !show);
     },
 
     toggleTheme() {
