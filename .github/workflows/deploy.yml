@@ -20,7 +20,7 @@ jobs:
       - name: Deploy ke repo publik (GitHub Pages)
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.ACCESS_TOKEN }}
+          personal_token: ${{ secrets.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 }}
           external_repository: Admin-Dekstop/Tanya_Dataa  # Ganti sesuai nama repo publik kamu
           publish_branch: gh-pages  # Branch khusus GitHub Pages
           publish_dir: ./dist       # Ganti ke folder tempat file HTML kamu berada
