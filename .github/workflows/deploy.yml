@@ -3,7 +3,7 @@ name: Deploy Static HTML to GitHub Pages
 on:
   push:
     branches:
-      - gh-pages  # Ganti kalau branch utama lu bukan 'main'
+      - main  # Ganti kalau branch utama lu bukan 'main'
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
         with:
           personal_token: ${{ secrets.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 }}
           external_repository: Admin-Dekstop/Hosting-TanyaData
-          publish_branch: gh-pages
+          publish_branch: main
           publish_dir: ./dist
           force_orphan: true
           commit_message: "🚀 Auto deploy from private repo"
