@@ -16,8 +16,8 @@ jobs:
       - name: Deploy to GitHub Pages (public repo)
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.ACCESS_TOKEN }}
-          external_repository: username/project-publik
+          personal_token: ${{ secrets.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 }}
+          external_repository: Admin-Dekstop/Hosting-TanyaData
           publish_branch: gh-pages
           publish_dir: ./dist
           force_orphan: true
