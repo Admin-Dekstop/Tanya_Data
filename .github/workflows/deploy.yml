@@ -3,7 +3,7 @@ name: Deploy to Public GitHub Pages
 on:
   push:
     branches:
-      - main  # Ganti kalau branch utamamu bukan 'main'
+      - main
 
 jobs:
   deploy:
@@ -13,16 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Optional: Build command kalau kamu pakai framework kayak React/Vite
-      # - name: Build project
-      #   run: npm run build
-
       - name: Deploy to PUBLIC GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.ACCESS_TOKEN }}
-          external_repository: Admin-Dekstop/Hosting-TanyaData  # Ganti sesuai user/repo publikmu
-          publish_branch: gh-pages  # Pastikan repo publik aktifkan GitHub Pages dari branch ini
-          publish_dir: ./ # Ganti ke './' kalau file HTML ada di root
+          external_repository: Admin-Dekstop/Hosting-TanyaData
+          publish_branch: gh-pages
+          publish_dir: ./  # Ganti sesuai folder file kamu
           force_orphan: true
           commit_message: "🚀 Deploy from private repo"
