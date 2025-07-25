@@ -3,22 +3,26 @@ name: Deploy to Public GitHub Pages
 on:
   push:
     branches:
-      - main
+      - main  # Ganti ke 'master' kalau branch utama kamu bukan 'main'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout kode dari repo private
         uses: actions/checkout@v3
 
-      - name: Deploy to PUBLIC GitHub Pages
+      # Langkah build (opsional, kalau kamu pakai tools seperti Vite, React, dll)
+      # - name: Build proyek
+      #   run: npm install && npm run build
+
+      - name: Deploy ke repo publik (GitHub Pages)
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.ACCESS_TOKEN }}
-          external_repository: Admin-Dekstop/Hosting-TanyaData
-          publish_branch: gh-pages
-          publish_dir: ./dist # Ganti sesuai folder file kamu
+          external_repository: Admin-Dekstop/Tanya_Dataa  # Ganti sesuai nama repo publik kamu
+          publish_branch: gh-pages  # Branch khusus GitHub Pages
+          publish_dir: ./dist       # Ganti ke folder tempat file HTML kamu berada
           force_orphan: true
-          commit_message: "🚀 Deploy from private repo"
+          commit_message: "🚀 Deploy otomatis dari repo private"
