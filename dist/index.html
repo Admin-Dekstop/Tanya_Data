@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAX | Dasbor Analitik Keterlambatan Siswa</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Marked.js for rendering Markdown from AI -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-dev@latest"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-sidebar: #0f172a;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-on-sidebar: #e2e8f0;
+            --border-color: #e2e8f0;
+            --accent-color: #2563eb;
+            --accent-color-hover: #1d4ed8;
+            --rank-1-color: #facc15; /* yellow-400 */
+            --rank-2-color: #d1d5db; /* gray-300 */
+            --rank-3-color: #f59e0b; /* amber-500 */
+        }
+        [data-theme='dark'] {
+            --bg-primary: #1e293b;
+            --bg-secondary: #0f172a;
+            --bg-sidebar: #020617;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-on-sidebar: #e2e8f0;
+            --border-color: #334155;
+            --accent-color: #3b82f6;
+            --accent-color-hover: #2563eb;
+            --rank-1-color: #facc15;
+            --rank-2-color: #4b5563; /* gray-600 */
+            --rank-3-color: #f59e0b;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-secondary); 
+            color: var(--text-primary); 
+            transition: background-color 0.3s, color 0.3s; 
+        }
+        .sidebar { background-color: var(--bg-sidebar); color: var(--text-on-sidebar); }
+        .main-content-wrapper { background-color: var(--bg-secondary); }
+        .card { 
+            background-color: var(--bg-primary); 
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+        }
+        .menu-item.active { 
+            background-color: var(--accent-color); 
+            color: #ffffff; 
+            font-weight: 600; 
+        }
+        .menu-item:not(.active):hover { background-color: #334155; }
+        .prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark p, .prose-dark strong, .prose-dark li, .prose-dark ul, .prose-dark table, .prose-dark th, .prose-dark td { color: var(--text-primary); }
+        .prose table { width: 100%; } .prose th, .prose td { border: 1px solid var(--border-color); padding: 8px; }
+        #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, -2rem); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
+        #data-table tbody tr:hover, #habitual-table tbody tr:hover { background-color: var(--bg-secondary); }
+
+        .bottom-nav {
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .bottom-nav-item.active { color: var(--accent-color); }
+        .bottom-nav-item.active .nav-indicator {
+            width: 24px; height: 4px; background-color: var(--accent-color);
+            border-radius: 99px; position: absolute; bottom: 2px; transition: all 0.3s ease;
+        }
+
+        .rank-item .rank-icon {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .rank-item .rank-icon.rank-1 { background-color: var(--rank-1-color); }
+        .rank-item .rank-icon.rank-2 { background-color: var(--rank-2-color); }
+        .rank-item .rank-icon.rank-3 { background-color: var(--rank-3-color); }
+        .rank-item .rank-icon.rank-other { background-color: #e2e8f0; color: #64748b; }
+        [data-theme='dark'] .rank-item .rank-icon.rank-other { background-color: #475569; color: #cbd5e1; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="relative min-h-screen flex">
+        <!-- Sidebar untuk Desktop -->
+        <aside id="sidebar" class="sidebar w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50 hidden lg:flex">
+            <a href="#" id="logo-btn" class="flex items-center justify-center h-20 border-b cursor-pointer" style="border-color: #334155;">
+                <i data-lucide="bar-chart-big" class="h-8 w-8 text-blue-400"></i>
+                <h1 class="text-xl font-bold ml-2 tracking-wide">Analitik MAX</h1>
+            </a>
+            <nav id="main-nav" class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" data-page="dashboard" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Ringkasan</a>
+                <a href="#" data-page="habitual_detector" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="user-check" class="mr-3"></i>Deteksi Pelanggar</a>
+                <a href="#" data-page="data_explorer" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="search-check" class="mr-3"></i>Penjelajah Data</a>
+                <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Asisten AI</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col overflow-hidden main-content-wrapper">
+            <!-- Top bar -->
+            <header class="flex justify-between items-center p-4 h-20 bg-primary border-b" style="border-color: var(--border-color);">
+                <div class="flex items-center">
+                    <button id="menu-toggle-btn" class="text-secondary hover:text-primary lg:hidden mr-4">
+                        <i data-lucide="menu" class="h-7 w-7"></i>
+                    </button>
+                    <h1 id="page-title" class="font-bold text-2xl tracking-tight">Ringkasan Analitik</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="theme-toggle-btn" class="text-secondary hover:text-primary p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700">
+                        <i data-lucide="sun" class="h-6 w-6"></i>
+                    </button>
+                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        AK
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main id="main-content-area" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+                        <div class="lg:col-span-3 card p-4 md:p-6 rounded-2xl">
+                            <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="text-indigo-400"></i>Keterlambatan per Kelas</h3>
+                            <div id="chart-by-class-container" class="h-80 md:h-96"></div>
+                        </div>
+                        <div class="lg:col-span-2 card p-4 md:p-6 rounded-2xl">
+                             <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="award" class="text-yellow-400"></i>Paling Sering Terlambat</h3>
+                            <div id="top-students-container" class="space-y-4"></div>
+                        </div>
+                    </div>
+                    <div class="card p-4 md:p-6 rounded-2xl">
+                        <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="trending-up" class="text-green-400"></i>Tren Keterlambatan 7 Hari Terakhir!!</h3>
+                        <div id="trend-chart-container" class="h-80"></div>
+                    </div>
+                </div>
+                
+                <!-- Habitual Detector Page -->
+                <div id="page-habitual_detector" class="page-content hidden">
+                    <div class="card p-4 md:p-6 rounded-2xl">
+                        <h3 class="font-bold text-lg md:text-xl mb-4"> Deteksi Pelanggar Berulang</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
+                            <div>
+                                <label for="habitual-min-count" class="text-sm font-medium text-secondary">Terlambat Lebih Dari</label>
+                                <div class="flex items-center mt-1">
+                                    <input type="number" id="habitual-min-count" value="1" min="0" class="p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                                    <span class="ml-2 text-secondary">kali</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="habitual-start-date" class="text-sm font-medium text-secondary">Dari Tanggal</label>
+                                <input type="date" id="habitual-start-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div>
+                                <label for="habitual-end-date" class="text-sm font-medium text-secondary">Hingga Tanggal</label>
+                                <input type="date" id="habitual-end-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div class="flex gap-3">
+                                <button id="habitual-apply-btn" class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all shadow-md">
+                                    <i data-lucide="filter" class="w-4 h-4"></i> Terapkan
+                                </button>
+                                <button id="habitual-download-btn" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Unduh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto mt-6">
+                            <table class="w-full text-sm text-left" id="habitual-table">
+                                <thead class="text-xs uppercase" style="background-color: var(--bg-secondary);">
+                                    <tr>
+                                        <th class="px-4 py-3">Nama Siswa</th>
+                                        <th class="px-4 py-3">Kelas</th>
+                                        <th class="px-4 py-3">Tanggal Terlambat</th>
+                                        <th class="px-4 py-3 text-center">Total Keterlambatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="habitual-table-body">
+                                    <!-- Hasil deteksi akan muncul di sini -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Explorer Page -->
+                <div id="page-data_explorer" class="page-content hidden">
+                    <div class="card p-4 md:p-6 rounded-2xl">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label for="filter-start-date" class="text-sm font-medium text-secondary">Dari Tanggal</label>
+                                <input type="date" id="filter-start-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div>
+                                <label for="filter-end-date" class="text-sm font-medium text-secondary">Hingga Tanggal</label>
+                                <input type="date" id="filter-end-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div>
+                                <label for="filter-class" class="text-sm font-medium text-secondary">Filter Kelas</label>
+                                <select id="filter-class" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);"></select>
+                            </div>
+                            <div>
+                                <label for="filter-name" class="text-sm font-medium text-secondary">Cari Nama Siswa</label>
+                                <input type="text" id="filter-name" placeholder="Ketik nama..." class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-end gap-3 mb-6">
+                            <button id="reset-filter-btn" class="flex items-center justify-center gap-2 bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Filter
+                            </button>
+                            <button id="download-filtered-btn" class="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
+                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Data
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left" id="data-table">
+                                <thead class="text-xs uppercase" style="background-color: var(--bg-secondary);"><tr id="table-header-row"></tr></thead>
+                                <tbody id="table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Analyst Page -->
+                <div id="page-ai_analyst" class="page-content hidden h-full">
+                    <div class="card rounded-2xl flex flex-col h-full overflow-hidden">
+                        <div class="p-4 border-b flex items-center gap-3" style="border-color: var(--border-color);"><i data-lucide="bot" class="text-purple-400 w-8 h-8"></i><h2 class="text-xl font-bold">Tanya Asisten AI</h2></div>
+                        <div id="chat-messages" class="flex-grow p-4 overflow-y-auto"></div>
+                        <div class="p-4 border-t" style="border-color: var(--border-color);">
+                            <div class="flex items-center">
+                                <input type="text" id="chat-input" class="flex-grow border rounded-l-lg p-3 focus:outline-none focus:ring-2 bg-transparent" style="border-color: var(--border-color); --tw-ring-color: var(--accent-color);" placeholder="Contoh: Bandingkan tren kelas 10A dan 11B...">
+                                <button id="send-button" class="font-bold p-3 rounded-r-lg flex items-center justify-center text-white" style="background-color: var(--accent-color); hover:background-color: var(--accent-color-hover);">
+                                    <i data-lucide="send" class="h-6 w-6"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            
+            <div class="h-20 lg:hidden"></div>
+        </div>
+    </div>
+    
+    <!-- Navigasi Bawah untuk Mobile -->
+    <nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 h-20 flex justify-around items-center bottom-nav z-50">
+        <a href="#" data-page="dashboard" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full active">
+            <i data-lucide="layout-dashboard" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Ringkasan</span>
+            <div class="nav-indicator"></div>
+        </a>
+        <a href="#" data-page="habitual_detector" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
+            <i data-lucide="user-check" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Deteksi</span>
+            <div class="nav-indicator"></div>
+        </a>
+        <a href="#" data-page="data_explorer" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
+            <i data-lucide="search-check" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Penjelajah</span>
+            <div class="nav-indicator"></div>
+        </a>
+        <a href="#" data-page="ai_analyst" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
+            <i data-lucide="brain-circuit" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Asisten AI</span>
+            <div class="nav-indicator"></div>
+        </a>
+    </nav>
+    
+    <!-- Modal untuk Unduh Laporan Umum -->
+    <div id="download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="card rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="p-6 border-b" style="border-color: var(--border-color);">
+                <h2 class="text-xl font-bold">Konfirmasi Unduhan Laporan</h2>
+            </div>
+            <div class="p-6">
+                <label for="pdf-title-input" class="text-sm font-medium text-secondary">Judul Kop Laporan</label>
+                <input type="text" id="pdf-title-input" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                <p class="text-xs text-secondary mt-2">Judul ini akan muncul di bagian atas dokumen PDF Anda.</p>
+            </div>
+            <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-b-2xl">
+                <button id="cancel-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
+                <button id="confirm-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi & Unduh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Unduh Laporan Pelanggar Berulang -->
+    <div id="habitual-download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="card rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="p-6 border-b" style="border-color: var(--border-color);">
+                <h2 class="text-xl font-bold">Unduh Data Pelanggar </h2>
+            </div>
+            <div class="p-6">
+                <label for="habitual-pdf-title-input" class="text-sm font-medium text-secondary">Judul Kop Laporan</label>
+                <input type="text" id="habitual-pdf-title-input" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                <p class="text-xs text-secondary mt-2">Judul ini akan muncul di bagian atas dokumen PDF Anda.</p>
+            </div>
+            <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-b-2xl">
+                <button id="cancel-habitual-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
+                <button id="confirm-habitual-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi & Unduh</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
+    <div id="toast" class="fixed bottom-5 left-1/2 py-3 px-6 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500 text-sm font-medium"><p id="toast-message"></p></div>
+
+<script>
+// --- SCRIPT START --- //
+
+const GOOGLE_SHEETS_API_KEY = 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY';
+const SPREADSHEET_ID = '1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc';
+const GEMINI_API_KEY = 'AIzaSyDUIijYUqNa7zrQ_m3sC44-fopxuIs7eOA';
+
+const app = {
+    state: {
+        isLoading: true,
+        theme: 'light',
+        data: { all: [], filtered: [] },
+        analytics: {},
+        headers: [],
+        habitualResults: [], // State untuk menyimpan hasil deteksi
+    },
+    dom: {
+        html: document.documentElement,
+        sidebar: document.getElementById('sidebar'),
+        logoBtn: document.getElementById('logo-btn'),
+        mainNav: document.getElementById('main-nav'),
+        bottomNav: document.getElementById('bottom-nav'),
+        pages: document.querySelectorAll('.page-content'),
+        menuToggleBtn: document.getElementById('menu-toggle-btn'),
+        themeToggleBtn: document.getElementById('theme-toggle-btn'),
+        sidebarOverlay: document.getElementById('sidebar-overlay'),
+        pageTitle: document.getElementById('page-title'),
+        containers: {
+            classChart: document.getElementById('chart-by-class-container'),
+            topStudents: document.getElementById('top-students-container'),
+            trendChart: document.getElementById('trend-chart-container'),
+            habitualTableBody: document.getElementById('habitual-table-body'),
+            tableHeader: document.getElementById('table-header-row'),
+            tableBody: document.getElementById('table-body'),
+            chat: document.getElementById('chat-messages'),
+        },
+        inputs: {
+            filterStart: document.getElementById('filter-start-date'),
+            filterEnd: document.getElementById('filter-end-date'),
+            filterClass: document.getElementById('filter-class'),
+            filterName: document.getElementById('filter-name'),
+            chat: document.getElementById('chat-input'),
+            pdfTitle: document.getElementById('pdf-title-input'),
+            habitualMinCount: document.getElementById('habitual-min-count'),
+            habitualStartDate: document.getElementById('habitual-start-date'),
+            habitualEndDate: document.getElementById('habitual-end-date'),
+            habitualPdfTitle: document.getElementById('habitual-pdf-title-input'),
+        },
+        buttons: {
+            sendChat: document.getElementById('send-button'),
+            resetFilter: document.getElementById('reset-filter-btn'),
+            downloadFiltered: document.getElementById('download-filtered-btn'),
+            confirmDownload: document.getElementById('confirm-download-btn'),
+            cancelDownload: document.getElementById('cancel-download-btn'),
+            habitualApply: document.getElementById('habitual-apply-btn'),
+            habitualDownload: document.getElementById('habitual-download-btn'),
+            confirmHabitualDownload: document.getElementById('confirm-habitual-download-btn'),
+            cancelHabitualDownload: document.getElementById('cancel-habitual-download-btn'),
+        },
+        downloadModal: document.getElementById('download-modal'),
+        habitualDownloadModal: document.getElementById('habitual-download-modal'),
+        toast: { el: document.getElementById('toast'), msg: document.getElementById('toast-message') },
+    },
+    charts: { byClass: null, trendChart: null },
+    
+    init() {
+        this.switchPage = this.switchPage.bind(this);
+        this.toggleSidebar = this.toggleSidebar.bind(this);
+        this.loadTheme();
+        this.setupEventListeners();
+        
+        if (GOOGLE_SHEETS_API_KEY.includes('GANTI_DENGAN') || SPREADSHEET_ID.includes('GANTI_DENGAN')) {
+            this.showToast('Konfigurasi diperlukan. Harap edit kredensial di dalam kode.', 10000);
+            this.renderSkeletons();
+        } else {
+            this.utils.setDefaultDates(); // Set default dates before loading data
+            this.loadData();
+        }
+        this.utils.createIcons();
+    },
+
+    async loadData() {
+        this.state.isLoading = true;
+        this.renderSkeletons();
+        try {
+            const RANGE = 'Sheet1!A:F';
+            const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${GOOGLE_SHEETS_API_KEY}`);
+            if (!response.ok) throw new Error((await response.json()).error.message);
+            
+            const data = await response.json();
+            const rows = data.values;
+            if (!rows || rows.length < 2) throw new Error('Data tidak ditemukan di spreadsheet.');
+
+            this.state.headers = rows[0];
+            
+            // Process and clean data
+            this.state.data.all = rows.slice(1).map(row => {
+                const obj = {};
+                this.state.headers.forEach((h, i) => {
+                    let value = row[i] || '';
+                    // Trim student names to ensure consistency
+                    if (h.toLowerCase() === 'nama' && typeof value === 'string') {
+                        value = value.trim();
+                    }
+                    obj[h.toLowerCase()] = value;
+                });
+                return obj;
+            }).filter(row => row.tanggal && row.nama); // Ensure essential data exists
+
+            this.state.data.filtered = [...this.state.data.all];
+            this.renderAll();
+            this.handleHabitualDetection(); // Run detection with default dates
+            this.showToast('Data berhasil dimuat!', 2000);
+        } catch (error) {
+            this.showToast(`Gagal memuat data: ${error.message}`, 5000);
+            console.error(error);
+        } finally {
+            this.state.isLoading = false;
+        }
+    },
+
+    processAnalytics(data) {
+        const byClass = {};
+        data.forEach(row => {
+            byClass[row.kelas] = (byClass[row.kelas] || 0) + 1;
+        });
+
+        const topStudents = this.utils.getTopItems(data, 'nama').slice(0, 5);
+        
+        const trendData = { labels: [], counts: [] };
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const dateString = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+            trendData.labels.push(dateString);
+
+            const count = data.filter(row => {
+                const rowDate = this.utils.parseDate(row.tanggal);
+                return rowDate && rowDate.getTime() === date.getTime();
+            }).length;
+            trendData.counts.push(count);
+        }
+
+        this.state.analytics = {
+            byClass,
+            topStudents,
+            trendData,
+        };
+    },
+    
+    renderAll() {
+        this.processAnalytics(this.state.data.all);
+        this.renderClassChart();
+        this.renderTopStudentsList();
+        this.renderTrendChart();
+        this.renderFilters();
+        this.renderTable();
+        this.utils.createIcons();
+    },
+    
+    renderSkeletons() {
+        const skeletonChart = `<div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>`;
+        this.dom.containers.classChart.innerHTML = skeletonChart;
+        this.dom.containers.trendChart.innerHTML = skeletonChart;
+        
+        let skeletonList = '';
+        for (let i = 0; i < 5; i++) {
+            skeletonList += `<div class="flex items-center gap-4 animate-pulse"><div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700"></div><div class="flex-1"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div></div>`;
+        }
+        this.dom.containers.topStudents.innerHTML = skeletonList;
+        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
+    },
+
+    renderClassChart() {
+        const container = this.dom.containers.classChart;
+        container.innerHTML = '<canvas></canvas>';
+        if (this.charts.byClass) this.charts.byClass.destroy();
+        
+        const ctx = container.firstElementChild.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, container.offsetHeight);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+        gradient.addColorStop(1, 'rgba(191, 219, 254, 0.5)');
+
+        const data = this.state.analytics.byClass;
+        const sortedData = Object.entries(data).sort((a, b) => b[1] - a[1]);
+        
+        this.charts.byClass = new Chart(ctx, { type: 'bar', data: { labels: sortedData.map(d => d[0]), datasets: [{ label: 'Jumlah Kasus', data: sortedData.map(d => d[1]), backgroundColor: gradient, borderWidth: 0, borderRadius: { topLeft: 6, topRight: 6 }, barThickness: 20, }] }, options: this.utils.getChartOptions() });
+    },
+
+    renderTopStudentsList() {
+        const container = this.dom.containers.topStudents;
+        const students = this.state.analytics.topStudents;
+        if (students.length === 0) {
+            container.innerHTML = `<p class="text-sm text-secondary text-center py-8">Belum ada data siswa.</p>`;
+            return;
+        }
+        container.innerHTML = students.map((student, index) => {
+            const rank = index + 1;
+            let rankClass = 'rank-other';
+            if (rank === 1) rankClass = 'rank-1'; if (rank === 2) rankClass = 'rank-2'; if (rank === 3) rankClass = 'rank-3';
+            return `<div class="flex items-center gap-4 rank-item"><div class="rank-icon ${rankClass}">${rank}</div><div class="flex-1"><p class="font-semibold text-primary truncate">${student.item}</p><p class="text-sm text-secondary">${student.count} kali terlambat</p></div><div class="font-bold text-lg text-primary">${student.count}</div></div>`;
+        }).join('');
+    },
+
+    renderTrendChart() {
+        const container = this.dom.containers.trendChart;
+        container.innerHTML = '<canvas></canvas>';
+        if (this.charts.trendChart) this.charts.trendChart.destroy();
+        
+        const ctx = container.firstElementChild.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, container.offsetHeight);
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+        const data = this.state.analytics.trendData;
+        this.charts.trendChart = new Chart(ctx, { type: 'line', data: { labels: data.labels, datasets: [{ label: 'Jumlah Keterlambatan', data: data.counts, fill: true, backgroundColor: gradient, borderColor: '#10b981', borderWidth: 2, pointBackgroundColor: '#10b981', pointBorderColor: '#ffffff', pointHoverBackgroundColor: '#ffffff', pointHoverBorderColor: '#10b981', pointRadius: 4, pointBorderWidth: 2, tension: 0.4, }] }, options: this.utils.getChartOptions() });
+    },
+    
+    handleHabitualDetection() {
+        const minCount = parseInt(this.dom.inputs.habitualMinCount.value) || 0;
+        const start = this.dom.inputs.habitualStartDate.value ? new Date(this.dom.inputs.habitualStartDate.value) : null;
+        const end = this.dom.inputs.habitualEndDate.value ? new Date(this.dom.inputs.habitualEndDate.value) : null;
+        
+        if(start) start.setHours(0,0,0,0);
+        if(end) end.setHours(23,59,59,999);
+
+        // 1. Filter all records by the selected date range.
+        const filteredByDate = this.state.data.all.filter(row => {
+            const rowDate = this.utils.parseDate(row.tanggal);
+            if (!rowDate) return false;
+            return (!start || rowDate >= start) && (!end || rowDate <= end);
+        });
+
+        // 2. Count occurrences for each student.
+        const counts = filteredByDate.reduce((acc, row) => {
+            const studentName = row.nama.trim(); // Use trimmed name for accuracy
+            if (!acc[studentName]) {
+                acc[studentName] = { count: 0, kelas: row.kelas };
+            }
+            acc[studentName].count++;
+            return acc;
+        }, {});
+        
+        // 3. Get the names of students who meet the minCount criteria.
+        const habitualOffenderNames = Object.keys(counts).filter(name => counts[name].count > minCount);
+
+        // 4. Create the final results list with individual records for the offenders.
+        const detailedResults = filteredByDate
+            .filter(row => habitualOffenderNames.includes(row.nama.trim()))
+            .map(row => ({
+                ...row, // a single late record, contains 'nama', 'kelas', 'tanggal', etc.
+                totalCount: counts[row.nama.trim()].count // add the total count for that student
+            }));
+
+        // 5. Sort the results to group by student, then by date
+        detailedResults.sort((a, b) => {
+            if (a.nama < b.nama) return -1;
+            if (a.nama > b.nama) return 1;
+            const dateA = this.utils.parseDate(a.tanggal);
+            const dateB = this.utils.parseDate(b.tanggal);
+            return dateA && dateB ? dateA - dateB : 0;
+        });
+
+        this.state.habitualResults = detailedResults;
+        this.renderHabitualTable();
+    },
+
+    renderHabitualTable() {
+        const container = this.dom.containers.habitualTableBody;
+        const results = this.state.habitualResults;
+
+        if (results.length === 0) {
+            container.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
+            return;
+        }
+
+        container.innerHTML = results.map(record => `
+            <tr class="border-b transition-colors" style="border-color: var(--border-color);">
+                <td class="px-4 py-3 font-semibold">${record.nama}</td>
+                <td class="px-4 py-3">${record.kelas}</td>
+                <td class="px-4 py-3">${record.tanggal}</td>
+                <td class="px-4 py-3 text-center font-bold text-lg">${record.totalCount}</td>
+            </tr>
+        `).join('');
+    },
+    
+    showHabitualDownloadModal() {
+        if (this.state.habitualResults.length === 0) {
+            this.showToast('Tidak ada data untuk diunduh.', 3000);
+            return;
+        }
+        const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        this.dom.inputs.habitualPdfTitle.value = `Laporan Pelanggar Berulang - ${today}`;
+        this.dom.habitualDownloadModal.classList.remove('hidden');
+    },
+
+    handleHabitualPdfDownload() {
+        const customTitle = this.dom.inputs.habitualPdfTitle.value.trim();
+        if (!customTitle) {
+            this.showToast('Judul laporan tidak boleh kosong.', 3000);
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text(customTitle, 14, 22);
+        
+        const head = [['Nama Siswa', 'Kelas', 'Tanggal Terlambat', 'Total Keterlambatan Siswa']];
+        const body = this.state.habitualResults.map(record => [record.nama, record.kelas, record.tanggal, record.totalCount]);
+        
+        doc.autoTable({ 
+            head, 
+            body, 
+            startY: 30, 
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            styles: { halign: 'center' },
+            columnStyles: { 
+                0: { halign: 'left' }, 
+                1: { halign: 'left' },
+                2: { halign: 'left' }
+            }
+        });
+
+        doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
+        this.showToast('Laporan PDF sedang dibuat...', 2000);
+        this.dom.habitualDownloadModal.classList.add('hidden');
+    },
+
+    renderFilters() {
+        const classes = [...new Set(this.state.data.all.map(row => row.kelas))].sort();
+        this.dom.inputs.filterClass.innerHTML = '<option value="">Semua Kelas</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+    },
+    
+    renderTable() {
+        const container = this.dom.containers.tableBody;
+        this.dom.containers.tableHeader.innerHTML = this.state.headers.map(h => `<th class="px-4 py-3">${h}</th>`).join('');
+        if (this.state.data.filtered.length === 0) {
+            container.innerHTML = `<tr><td colspan="${this.state.headers.length}" class="text-center p-8 text-secondary">Tidak ada data yang cocok dengan filter Anda.</td></tr>`;
+            return;
+        }
+        container.innerHTML = this.state.data.filtered.map(row => 
+            `<tr class="border-b transition-colors" style="border-color: var(--border-color);">${this.state.headers.map(h => `<td class="px-4 py-3">${row[h.toLowerCase()]}</td>`).join('')}</tr>`
+        ).join('');
+    },
+
+    setupEventListeners() {
+        this.dom.logoBtn.addEventListener('click', (e) => { e.preventDefault(); this.loadData(); });
+        
+        const handleNavClick = (e) => {
+            if (e.target.closest('[data-page]')) {
+                e.preventDefault();
+                this.switchPage(e.target.closest('[data-page]').dataset.page);
+            }
+        };
+
+        this.dom.mainNav.addEventListener('click', handleNavClick);
+        this.dom.bottomNav.addEventListener('click', handleNavClick);
+
+        this.dom.menuToggleBtn.addEventListener('click', () => this.toggleSidebar());
+        this.dom.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
+        this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+        this.dom.buttons.sendChat.addEventListener('click', () => this.handleChatSubmit());
+        this.dom.inputs.chat.addEventListener('keypress', e => e.key === 'Enter' && this.handleChatSubmit());
+        this.dom.buttons.resetFilter.addEventListener('click', () => this.resetFilters());
+        this.dom.buttons.downloadFiltered.addEventListener('click', () => this.showDownloadModal());
+        this.dom.buttons.cancelDownload.addEventListener('click', () => this.toggleDownloadModal(false));
+        this.dom.buttons.confirmDownload.addEventListener('click', () => this.handlePdfDownload());
+        this.dom.buttons.habitualApply.addEventListener('click', () => this.handleHabitualDetection());
+        this.dom.buttons.habitualDownload.addEventListener('click', () => this.showHabitualDownloadModal());
+        this.dom.buttons.confirmHabitualDownload.addEventListener('click', () => this.handleHabitualPdfDownload());
+        this.dom.buttons.cancelHabitualDownload.addEventListener('click', () => this.dom.habitualDownloadModal.classList.add('hidden'));
+        Object.values(this.dom.inputs).filter(el => typeof el === 'object' && el.id?.startsWith('filter')).forEach(el => el.addEventListener('input', () => this.applyFilters()));
+    },
+
+    switchPage(pageId) {
+        this.dom.pages.forEach(p => p.classList.add('hidden'));
+        document.getElementById(`page-${pageId}`).classList.remove('hidden');
+        
+        document.querySelectorAll('#main-nav .menu-item').forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
+        document.querySelectorAll('#bottom-nav .bottom-nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
+
+        const pageTitles = {
+            dashboard: 'Ringkasan Analitik',
+            habitual_detector: 'Deteksi Pelanggar Berulang',
+            data_explorer: 'Penjelajah Data',
+            ai_analyst: 'Asisten AI'
+        };
+        this.dom.pageTitle.textContent = pageTitles[pageId] || 'Dasbor';
+        
+        if (window.innerWidth < 1024) {
+            this.toggleSidebar(false);
+        }
+    },
+
+    toggleSidebar(forceShow = null) {
+        const show = forceShow !== null ? forceShow : this.dom.sidebar.classList.contains('-translate-x-full');
+        this.dom.sidebar.classList.toggle('-translate-x-full', !show);
+        this.dom.sidebarOverlay.classList.toggle('hidden', !show);
+    },
+
+    toggleTheme() {
+        this.state.theme = this.state.theme === 'light' ? 'dark' : 'light';
+        this.dom.html.dataset.theme = this.state.theme;
+        localStorage.setItem('dashboardTheme', this.state.theme);
+        this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
+        this.utils.createIcons();
+        if(!this.state.isLoading) {
+            this.renderClassChart();
+            this.renderTrendChart();
+        }
+    },
+
+    applyFilters() {
+        const start = this.dom.inputs.filterStart.value ? new Date(this.dom.inputs.filterStart.value) : null;
+        const end = this.dom.inputs.filterEnd.value ? new Date(this.dom.inputs.filterEnd.value) : null;
+        const classFilter = this.dom.inputs.filterClass.value;
+        const nameFilter = this.dom.inputs.filterName.value.toLowerCase();
+        
+        if(start) start.setHours(0,0,0,0);
+        if(end) end.setHours(23,59,59,999);
+
+        this.state.data.filtered = this.state.data.all.filter(row => {
+            const rowDate = this.utils.parseDate(row.tanggal);
+            const dateMatch = (!start || rowDate >= start) && (!end || rowDate <= end);
+            const classMatch = !classFilter || row.kelas === classFilter;
+            const nameMatch = row.nama.toLowerCase().includes(nameFilter);
+            return dateMatch && classMatch && nameMatch;
+        });
+        this.renderTable();
+    },
+    
+    resetFilters() {
+        this.dom.inputs.filterStart.value = '';
+        this.dom.inputs.filterEnd.value = '';
+        this.dom.inputs.filterClass.value = '';
+        this.dom.inputs.filterName.value = '';
+        this.applyFilters();
+        this.showToast('Filter telah direset.');
+    },
+    
+    loadTheme() {
+        this.state.theme = localStorage.getItem('dashboardTheme') || 'light';
+        this.dom.html.dataset.theme = this.state.theme;
+        this.dom.themeToggleBtn.innerHTML = `<i data-lucide="${this.state.theme === 'light' ? 'moon' : 'sun'}" class="h-6 w-6"></i>`;
+    },
+    
+    showDownloadModal() {
+        if (this.state.data.filtered.length === 0) {
+            this.showToast('Tidak ada data untuk diunduh.', 3000);
+            return;
+        }
+        const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        this.dom.inputs.pdfTitle.value = `Laporan Keterlambatan Siswa - ${today}`;
+        this.toggleDownloadModal(true);
+    },
+
+    toggleDownloadModal(show) {
+        this.dom.downloadModal.classList.toggle('hidden', !show);
+    },
+
+    handlePdfDownload() {
+        const customTitle = this.dom.inputs.pdfTitle.value.trim();
+        if (!customTitle) {
+            this.showToast('Judul laporan tidak boleh kosong.', 3000);
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(18); doc.text(customTitle, 14, 22);
+        
+        const bodyData = this.state.data.filtered.map(row => this.state.headers.map(h => row[h.toLowerCase()]));
+        doc.autoTable({ head: [this.state.headers], body: bodyData, startY: 30, theme: 'grid' });
+        
+        doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
+        this.showToast('Laporan PDF sedang dibuat...', 2000);
+        this.toggleDownloadModal(false);
+    },
+
+    async handleChatSubmit() {
+        const userInput = this.dom.inputs.chat.value.trim();
+        if (!userInput) return;
+        if (GEMINI_API_KEY.includes('GANTI_DENGAN')) {
+            this.showToast('Harap masukkan Gemini API Key di dalam kode.', 3000);
+            return;
+        }
+
+        this.addChatMessage(userInput, 'user');
+        this.dom.inputs.chat.value = '';
+        this.addChatMessage('...', 'bot', true);
+
+        try {
+            const dataForAi = this.state.data.all.slice(0, 500);
+            const systemPrompt = `Anda adalah "Max", seorang analis data AI yang sangat canggih, ramah, dan profesional. Anda berinteraksi dalam format chat yang rapi.
+            MISI UTAMA ANDA: Memberikan jawaban yang jelas, terstruktur, dan mendalam berdasarkan data keterlambatan siswa yang diberikan. JANGAN sesekali membuat asumsi atau memberikan informasi di luar data yang disediakan.
+            PERATURAN FORMAT JAWABAN (WAJIB DIPATUHI):
+            1.  **Gunakan Markdown:** Selalu gunakan Markdown untuk memformat jawaban Anda (teks tebal, daftar, dll).
+            2.  **Struktur Jawaban:** Mulai dengan ringkasan singkat, diikuti dengan detail dalam bentuk daftar berpoin (\`-\`) atau bernomor (\`1.\`). Gunakan teks **tebal** untuk menyorot metrik atau nama penting.
+            3.  **Jadwal untuk Data Banyak:** Jika Anda perlu mendaftar lebih dari 5 item (contoh: daftar siswa), gunakan **Tabel Markdown** yang rapi.
+            4.  **Nada Profesional & Membantu:** Gunakan bahasa yang mudah dipahami tetapi tetap profesional. Sapa pengguna dengan baik.
+            5.  **Fokus Pada Data:** Setiap jawaban harus berdasarkan data yang dilampirkan di bawah. Jika pertanyaan tidak bisa dijawab dengan data yang ada, nyatakan dengan sopan.
+            Berikut adalah data keterlambatan siswa (sampel):
+            ${JSON.stringify(dataForAi)}
+            `;
+            const payload = { contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\nPertanyaan Pengguna: "${userInput}"` }] }] };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) throw new Error((await response.json()).error.message);
+            
+            const result = await response.json();
+            const aiResponse = result.candidates[0].content.parts[0].text;
+            this.updateLastBotMessage(aiResponse);
+
+        } catch (error) {
+            console.error('AI Error:', error);
+            this.updateLastBotMessage('Maaf, terjadi kesalahan saat menghubungi Asisten AI. Silakan coba lagi nanti.');
+        }
+    },
+
+    addChatMessage(text, sender, isThinking = false) {
+        const container = this.dom.containers.chat;
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex mb-4 gap-3 items-start ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        const iconHtml = `<div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-slate-700 text-white'}"><i data-lucide="${sender === 'user' ? 'user' : 'bot'}" class="w-5 h-5"></i></div>`;
+        const bubble = document.createElement('div');
+        bubble.className = `prose p-3 rounded-lg max-w-full ${sender === 'user' ? 'bg-blue-500 text-white prose-invert' : 'card'}`;
+        if (this.state.theme === 'dark' && sender === 'bot') bubble.classList.add('prose-dark');
+        if (isThinking) { 
+            bubble.id = 'thinking-bubble'; 
+            bubble.innerHTML = `<div class="flex items-center space-x-1 p-1"><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: -0.3s;"></div><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: -0.15s;"></div><div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div></div>`; 
+        } else { 
+            bubble.innerHTML = marked.parse(text); 
+        }
+        wrapper.innerHTML = sender === 'user' ? `${bubble.outerHTML}${iconHtml}` : `${iconHtml}${bubble.outerHTML}`;
+        container.appendChild(wrapper);
+        container.scrollTop = container.scrollHeight;
+        this.utils.createIcons();
+    },
+
+    updateLastBotMessage(newText) {
+        const thinkingBubble = this.dom.containers.chat.querySelector('#thinking-bubble');
+        if (thinkingBubble) { 
+            thinkingBubble.innerHTML = marked.parse(newText);
+            thinkingBubble.id = '';
+        }
+    },
+
+    utils: {
+        createIcons() {
+            setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 0);
+        },
+        parseDate(s) {
+            if (!s || typeof s !== 'string') return null;
+            const parts = s.split('/');
+            if (parts.length !== 3) return null;
+            const [d, m, y] = parts.map(p => parseInt(p, 10));
+            // Check for valid date parts
+            if (isNaN(d) || isNaN(m) || isNaN(y) || y < 1000) return null;
+            return new Date(y, m - 1, d);
+        },
+        getTopItems(data, key) {
+            const counts = data.reduce((acc, row) => { acc[row[key]] = (acc[row[key]] || 0) + 1; return acc; }, {});
+            return Object.entries(counts).map(([item, count]) => ({item, count})).sort((a,b) => b.count - a.count);
+        },
+        setDefaultDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - 29); // Set start date to 30 days ago
+
+            // Format to YYYY-MM-DD for the input[type=date]
+            const formatDate = (date) => date.toISOString().split('T')[0];
+
+            app.dom.inputs.habitualEndDate.value = formatDate(endDate);
+            app.dom.inputs.habitualStartDate.value = formatDate(startDate);
+        },
+        getChartOptions() {
+            const isDark = app.state.theme === 'dark';
+            return {
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { precision: 0, color: isDark ? '#94a3b8' : '#64748b' }, 
+                        grid: { color: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(226, 232, 240, 0.7)' },
+                        border: { display: false }
+                    }, 
+                    x: { 
+                        ticks: { color: isDark ? '#94a3b8' : '#64748b' }, 
+                        grid: { display: false } 
+                    } 
+                },
+                plugins: { 
+                    legend: { display: false }
+                }
+            };
+        }
+    },
+
+    showToast(message, duration = 3000) {
+        this.dom.toast.msg.textContent = message;
+        this.dom.toast.el.classList.add('show');
+        setTimeout(() => this.dom.toast.el.classList.remove('show'), duration);
+    },
+};
+
+window.onload = () => app.init();
+
+</script>
+</body>
+</html>
