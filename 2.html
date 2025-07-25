@@ -204,8 +204,7 @@
                                     <tr>
                                         <th class="px-4 py-3">Nama Siswa</th>
                                         <th class="px-4 py-3">Kelas</th>
-                                        <th class="px-4 py-3">Tanggal</th>
-                                        <th class="px-4 py-3">Keterangan</th>
+                                        <th class="px-4 py-3 text-center">Jumlah Keterlambatan</th>
                                     </tr>
                                 </thead>
                                 <tbody id="habitual-table-body">
@@ -413,6 +412,7 @@ const app = {
             this.showToast('Konfigurasi diperlukan. Harap edit kredensial di dalam kode.', 10000);
             this.renderSkeletons();
         } else {
+            this.utils.setDefaultDates(); // Set default dates before loading data
             this.loadData();
         }
         this.utils.createIcons();
@@ -432,15 +432,23 @@ const app = {
 
             this.state.headers = rows[0];
             
+            // Process and clean data
             this.state.data.all = rows.slice(1).map(row => {
                 const obj = {};
-                this.state.headers.forEach((h, i) => obj[h.toLowerCase()] = row[i] || '');
+                this.state.headers.forEach((h, i) => {
+                    let value = row[i] || '';
+                    // Trim student names to ensure consistency
+                    if (h.toLowerCase() === 'nama' && typeof value === 'string') {
+                        value = value.trim();
+                    }
+                    obj[h.toLowerCase()] = value;
+                });
                 return obj;
-            }).filter(row => row.tanggal);
+            }).filter(row => row.tanggal && row.nama); // Ensure essential data exists
 
             this.state.data.filtered = [...this.state.data.all];
             this.renderAll();
-            this.handleHabitualDetection();
+            this.handleHabitualDetection(); // Run detection with default dates
             this.showToast('Data berhasil dimuat!', 2000);
         } catch (error) {
             this.showToast(`Gagal memuat data: ${error.message}`, 5000);
@@ -502,7 +510,7 @@ const app = {
             skeletonList += `<div class="flex items-center gap-4 animate-pulse"><div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700"></div><div class="flex-1"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div></div>`;
         }
         this.dom.containers.topStudents.innerHTML = skeletonList;
-        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
+        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
     },
 
     renderClassChart() {
@@ -558,25 +566,35 @@ const app = {
         if(start) start.setHours(0,0,0,0);
         if(end) end.setHours(23,59,59,999);
 
+        // 1. Filter all records by the selected date range.
         const filteredByDate = this.state.data.all.filter(row => {
             const rowDate = this.utils.parseDate(row.tanggal);
-            return (!start || rowDate >= start) && (!end || rowDate <= end);
+            if (!rowDate) return false;
+            const dateMatch = (!start || rowDate >= start) && (!end || rowDate <= end);
+            return dateMatch;
         });
 
+        // 2. Count occurrences for each student within the filtered date range.
         const counts = filteredByDate.reduce((acc, row) => {
-            acc[row.nama] = (acc[row.nama] || 0) + 1;
+            const studentName = row.nama;
+            if (!acc[studentName]) {
+                acc[studentName] = { count: 0, kelas: row.kelas };
+            }
+            acc[studentName].count++;
             return acc;
         }, {});
         
-        const offenders = Object.keys(counts).filter(name => counts[name] > minCount);
-
-        this.state.habitualResults = filteredByDate
-            .filter(row => offenders.includes(row.nama))
-            .sort((a, b) => {
-                if (a.nama < b.nama) return -1;
-                if (a.nama > b.nama) return 1;
-                return this.utils.parseDate(a.tanggal) - this.utils.parseDate(b.tanggal);
-            });
+        // 3. Create the final results array from the counts object.
+        this.state.habitualResults = Object.entries(counts)
+            .map(([nama, data]) => ({
+                nama: nama,
+                kelas: data.kelas,
+                count: data.count
+            }))
+            // 4. Filter this summary by the minimum count.
+            .filter(student => student.count > minCount) 
+            // 5. Sort the results by count descending.
+            .sort((a, b) => b.count - a.count);
 
         this.renderHabitualTable();
     },
@@ -586,16 +604,15 @@ const app = {
         const results = this.state.habitualResults;
 
         if (results.length === 0) {
-            container.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
+            container.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
             return;
         }
 
-        container.innerHTML = results.map(row => `
+        container.innerHTML = results.map(student => `
             <tr class="border-b transition-colors" style="border-color: var(--border-color);">
-                <td class="px-4 py-3 font-semibold">${row.nama}</td>
-                <td class="px-4 py-3">${row.kelas}</td>
-                <td class="px-4 py-3">${row.tanggal}</td>
-                <td class="px-4 py-3">${row.keterangan}</td>
+                <td class="px-4 py-3 font-semibold">${student.nama}</td>
+                <td class="px-4 py-3">${student.kelas}</td>
+                <td class="px-4 py-3 text-center font-bold text-lg">${student.count}</td>
             </tr>
         `).join('');
     },
@@ -623,10 +640,22 @@ const app = {
         doc.setFontSize(18);
         doc.text(customTitle, 14, 22);
         
-        const head = [['Nama Siswa', 'Kelas', 'Tanggal', 'Keterangan']];
-        const body = this.state.habitualResults.map(row => [row.nama, row.kelas, row.tanggal, row.keterangan]);
+        const head = [['Nama Siswa', 'Kelas', 'Jumlah Keterlambatan']];
+        const body = this.state.habitualResults.map(student => [student.nama, student.kelas, student.count]);
         
-        doc.autoTable({ head, body, startY: 30, theme: 'grid' });
+        doc.autoTable({ 
+            head, 
+            body, 
+            startY: 30, 
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            styles: { halign: 'center' },
+            columnStyles: { 
+                0: { halign: 'left' }, 
+                1: { halign: 'left' } 
+            }
+        });
+
         doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
         this.showToast('Laporan PDF sedang dibuat...', 2000);
         this.dom.habitualDownloadModal.classList.add('hidden');
@@ -861,11 +890,24 @@ const app = {
             const parts = s.split('/');
             if (parts.length !== 3) return null;
             const [d, m, y] = parts.map(p => parseInt(p, 10));
+            // Check for valid date parts
+            if (isNaN(d) || isNaN(m) || isNaN(y) || y < 1000) return null;
             return new Date(y, m - 1, d);
         },
         getTopItems(data, key) {
             const counts = data.reduce((acc, row) => { acc[row[key]] = (acc[row[key]] || 0) + 1; return acc; }, {});
             return Object.entries(counts).map(([item, count]) => ({item, count})).sort((a,b) => b.count - a.count);
+        },
+        setDefaultDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - 29); // Set start date to 30 days ago
+
+            // Format to YYYY-MM-DD for the input[type=date]
+            const formatDate = (date) => date.toISOString().split('T')[0];
+
+            app.dom.inputs.habitualEndDate.value = formatDate(endDate);
+            app.dom.inputs.habitualStartDate.value = formatDate(startDate);
         },
         getChartOptions() {
             const isDark = app.state.theme === 'dark';
