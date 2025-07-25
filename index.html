@@ -83,7 +83,7 @@
         .prose table { width: 100%; } .prose th, .prose td { border: 1px solid var(--border-color); padding: 8px; }
         #toast { transform: translate(-50%, 150%); } #toast.show { transform: translate(-50%, -2rem); }
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
-        #data-table tbody tr:hover { background-color: var(--bg-secondary); }
+        #data-table tbody tr:hover, #habitual-table tbody tr:hover { background-color: var(--bg-secondary); }
 
         .bottom-nav {
             background-color: var(--bg-primary);
@@ -123,6 +123,7 @@
             </a>
             <nav id="main-nav" class="flex-1 px-4 py-6 space-y-2">
                 <a href="#" data-page="dashboard" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200 active"><i data-lucide="layout-dashboard" class="mr-3"></i>Ringkasan</a>
+                <a href="#" data-page="habitual_detector" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="user-check" class="mr-3"></i>Deteksi Pelanggar</a>
                 <a href="#" data-page="data_explorer" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="search-check" class="mr-3"></i>Penjelajah Data</a>
                 <a href="#" data-page="ai_analyst" class="menu-item flex items-center py-3 px-4 rounded-lg transition duration-200"><i data-lucide="brain-circuit" class="mr-3"></i>Asisten AI</a>
             </nav>
@@ -153,27 +154,65 @@
                 <!-- Dashboard Page -->
                 <div id="page-dashboard" class="page-content">
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-                        <!-- Kolom Kiri: Grafik Kelas -->
                         <div class="lg:col-span-3 card p-4 md:p-6 rounded-2xl">
-                            <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2">
-                                <i data-lucide="bar-chart-3" class="text-indigo-400"></i>Keterlambatan per Kelas
-                            </h3>
+                            <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="text-indigo-400"></i>Keterlambatan per Kelas</h3>
                             <div id="chart-by-class-container" class="h-80 md:h-96"></div>
                         </div>
-                        <!-- Kolom Kanan: Peringkat Siswa -->
                         <div class="lg:col-span-2 card p-4 md:p-6 rounded-2xl">
-                             <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2">
-                                <i data-lucide="award" class="text-yellow-400"></i>Paling Sering Terlambat
-                            </h3>
+                             <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="award" class="text-yellow-400"></i>Paling Sering Terlambat</h3>
                             <div id="top-students-container" class="space-y-4"></div>
                         </div>
                     </div>
-                    <!-- Baris Baru: Grafik Tren -->
                     <div class="card p-4 md:p-6 rounded-2xl">
-                        <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2">
-                            <i data-lucide="trending-up" class="text-green-400"></i>Keterlambatan 7 Hari Terakhir!!
-                        </h3>
+                        <h3 class="font-bold text-lg md:text-xl mb-4 flex items-center gap-2"><i data-lucide="trending-up" class="text-green-400"></i>Tren Keterlambatan 7 Hari Terakhir!!</h3>
                         <div id="trend-chart-container" class="h-80"></div>
+                    </div>
+                </div>
+                
+                <!-- Habitual Detector Page -->
+                <div id="page-habitual_detector" class="page-content hidden">
+                    <div class="card p-4 md:p-6 rounded-2xl">
+                        <h3 class="font-bold text-lg md:text-xl mb-4"> Deteksi Pelanggar Berulang</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
+                            <div>
+                                <label for="habitual-min-count" class="text-sm font-medium text-secondary">Terlambat Lebih Dari</label>
+                                <div class="flex items-center mt-1">
+                                    <input type="number" id="habitual-min-count" value="1" min="0" class="p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                                    <span class="ml-2 text-secondary">kali</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="habitual-start-date" class="text-sm font-medium text-secondary">Dari Tanggal</label>
+                                <input type="date" id="habitual-start-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div>
+                                <label for="habitual-end-date" class="text-sm font-medium text-secondary">Hingga Tanggal</label>
+                                <input type="date" id="habitual-end-date" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                            </div>
+                            <div class="flex gap-3">
+                                <button id="habitual-apply-btn" class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all shadow-md">
+                                    <i data-lucide="filter" class="w-4 h-4"></i> Terapkan
+                                </button>
+                                <button id="habitual-download-btn" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Unduh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto mt-6">
+                            <table class="w-full text-sm text-left" id="habitual-table">
+                                <thead class="text-xs uppercase" style="background-color: var(--bg-secondary);">
+                                    <tr>
+                                        <th class="px-4 py-3">Nama Siswa</th>
+                                        <th class="px-4 py-3">Kelas</th>
+                                        <th class="px-4 py-3">Tanggal Terlambat</th>
+                                        <th class="px-4 py-3 text-center">Total Keterlambatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="habitual-table-body">
+                                    <!-- Hasil deteksi akan muncul di sini -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -243,6 +282,11 @@
             <span class="text-xs font-medium">Ringkasan</span>
             <div class="nav-indicator"></div>
         </a>
+        <a href="#" data-page="habitual_detector" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
+            <i data-lucide="user-check" class="h-6 w-6 mb-1"></i>
+            <span class="text-xs font-medium">Deteksi</span>
+            <div class="nav-indicator"></div>
+        </a>
         <a href="#" data-page="data_explorer" class="bottom-nav-item flex flex-col items-center justify-center text-secondary transition-colors w-full h-full">
             <i data-lucide="search-check" class="h-6 w-6 mb-1"></i>
             <span class="text-xs font-medium">Penjelajah</span>
@@ -255,6 +299,7 @@
         </a>
     </nav>
     
+    <!-- Modal untuk Unduh Laporan Umum -->
     <div id="download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
         <div class="card rounded-2xl w-full max-w-md shadow-2xl">
             <div class="p-6 border-b" style="border-color: var(--border-color);">
@@ -268,6 +313,24 @@
             <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-b-2xl">
                 <button id="cancel-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
                 <button id="confirm-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi & Unduh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Unduh Laporan Pelanggar Berulang -->
+    <div id="habitual-download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="card rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="p-6 border-b" style="border-color: var(--border-color);">
+                <h2 class="text-xl font-bold">Unduh Data Pelanggar </h2>
+            </div>
+            <div class="p-6">
+                <label for="habitual-pdf-title-input" class="text-sm font-medium text-secondary">Judul Kop Laporan</label>
+                <input type="text" id="habitual-pdf-title-input" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                <p class="text-xs text-secondary mt-2">Judul ini akan muncul di bagian atas dokumen PDF Anda.</p>
+            </div>
+            <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-b-2xl">
+                <button id="cancel-habitual-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
+                <button id="confirm-habitual-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi & Unduh</button>
             </div>
         </div>
     </div>
@@ -289,6 +352,7 @@ const app = {
         data: { all: [], filtered: [] },
         analytics: {},
         headers: [],
+        habitualResults: [], // State untuk menyimpan hasil deteksi
     },
     dom: {
         html: document.documentElement,
@@ -304,7 +368,8 @@ const app = {
         containers: {
             classChart: document.getElementById('chart-by-class-container'),
             topStudents: document.getElementById('top-students-container'),
-            trendChart: document.getElementById('trend-chart-container'), // Ditambahkan
+            trendChart: document.getElementById('trend-chart-container'),
+            habitualTableBody: document.getElementById('habitual-table-body'),
             tableHeader: document.getElementById('table-header-row'),
             tableBody: document.getElementById('table-body'),
             chat: document.getElementById('chat-messages'),
@@ -316,6 +381,10 @@ const app = {
             filterName: document.getElementById('filter-name'),
             chat: document.getElementById('chat-input'),
             pdfTitle: document.getElementById('pdf-title-input'),
+            habitualMinCount: document.getElementById('habitual-min-count'),
+            habitualStartDate: document.getElementById('habitual-start-date'),
+            habitualEndDate: document.getElementById('habitual-end-date'),
+            habitualPdfTitle: document.getElementById('habitual-pdf-title-input'),
         },
         buttons: {
             sendChat: document.getElementById('send-button'),
@@ -323,13 +392,20 @@ const app = {
             downloadFiltered: document.getElementById('download-filtered-btn'),
             confirmDownload: document.getElementById('confirm-download-btn'),
             cancelDownload: document.getElementById('cancel-download-btn'),
+            habitualApply: document.getElementById('habitual-apply-btn'),
+            habitualDownload: document.getElementById('habitual-download-btn'),
+            confirmHabitualDownload: document.getElementById('confirm-habitual-download-btn'),
+            cancelHabitualDownload: document.getElementById('cancel-habitual-download-btn'),
         },
         downloadModal: document.getElementById('download-modal'),
+        habitualDownloadModal: document.getElementById('habitual-download-modal'),
         toast: { el: document.getElementById('toast'), msg: document.getElementById('toast-message') },
     },
-    charts: { byClass: null, trendChart: null }, // Ditambahkan
+    charts: { byClass: null, trendChart: null },
     
     init() {
+        this.switchPage = this.switchPage.bind(this);
+        this.toggleSidebar = this.toggleSidebar.bind(this);
         this.loadTheme();
         this.setupEventListeners();
         
@@ -337,6 +413,7 @@ const app = {
             this.showToast('Konfigurasi diperlukan. Harap edit kredensial di dalam kode.', 10000);
             this.renderSkeletons();
         } else {
+            this.utils.setDefaultDates(); // Set default dates before loading data
             this.loadData();
         }
         this.utils.createIcons();
@@ -356,14 +433,23 @@ const app = {
 
             this.state.headers = rows[0];
             
+            // Process and clean data
             this.state.data.all = rows.slice(1).map(row => {
                 const obj = {};
-                this.state.headers.forEach((h, i) => obj[h.toLowerCase()] = row[i] || '');
+                this.state.headers.forEach((h, i) => {
+                    let value = row[i] || '';
+                    // Trim student names to ensure consistency
+                    if (h.toLowerCase() === 'nama' && typeof value === 'string') {
+                        value = value.trim();
+                    }
+                    obj[h.toLowerCase()] = value;
+                });
                 return obj;
-            }).filter(row => row.tanggal);
+            }).filter(row => row.tanggal && row.nama); // Ensure essential data exists
 
             this.state.data.filtered = [...this.state.data.all];
             this.renderAll();
+            this.handleHabitualDetection(); // Run detection with default dates
             this.showToast('Data berhasil dimuat!', 2000);
         } catch (error) {
             this.showToast(`Gagal memuat data: ${error.message}`, 5000);
@@ -381,7 +467,6 @@ const app = {
 
         const topStudents = this.utils.getTopItems(data, 'nama').slice(0, 5);
         
-        // Proses data untuk grafik tren 7 hari
         const trendData = { labels: [], counts: [] };
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -389,7 +474,7 @@ const app = {
         for (let i = 6; i >= 0; i--) {
             const date = new Date(today);
             date.setDate(today.getDate() - i);
-            const dateString = date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+            const dateString = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
             trendData.labels.push(dateString);
 
             const count = data.filter(row => {
@@ -402,7 +487,7 @@ const app = {
         this.state.analytics = {
             byClass,
             topStudents,
-            trendData, // Ditambahkan
+            trendData,
         };
     },
     
@@ -410,7 +495,7 @@ const app = {
         this.processAnalytics(this.state.data.all);
         this.renderClassChart();
         this.renderTopStudentsList();
-        this.renderTrendChart(); // Ditambahkan
+        this.renderTrendChart();
         this.renderFilters();
         this.renderTable();
         this.utils.createIcons();
@@ -419,21 +504,14 @@ const app = {
     renderSkeletons() {
         const skeletonChart = `<div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>`;
         this.dom.containers.classChart.innerHTML = skeletonChart;
-        this.dom.containers.trendChart.innerHTML = skeletonChart; // Ditambahkan
+        this.dom.containers.trendChart.innerHTML = skeletonChart;
         
         let skeletonList = '';
         for (let i = 0; i < 5; i++) {
-            skeletonList += `
-                <div class="flex items-center gap-4 animate-pulse">
-                    <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                    <div class="flex-1">
-                        <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                        <div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                </div>
-            `;
+            skeletonList += `<div class="flex items-center gap-4 animate-pulse"><div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700"></div><div class="flex-1"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div></div>`;
         }
         this.dom.containers.topStudents.innerHTML = skeletonList;
+        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
     },
 
     renderClassChart() {
@@ -449,49 +527,21 @@ const app = {
         const data = this.state.analytics.byClass;
         const sortedData = Object.entries(data).sort((a, b) => b[1] - a[1]);
         
-        this.charts.byClass = new Chart(ctx, { 
-            type: 'bar', 
-            data: { 
-                labels: sortedData.map(d => d[0]), 
-                datasets: [{ 
-                    label: 'Jumlah Kasus', 
-                    data: sortedData.map(d => d[1]), 
-                    backgroundColor: gradient,
-                    borderWidth: 0, 
-                    borderRadius: { topLeft: 6, topRight: 6 },
-                    barThickness: 20,
-                }] 
-            }, 
-            options: this.utils.getChartOptions() 
-        });
+        this.charts.byClass = new Chart(ctx, { type: 'bar', data: { labels: sortedData.map(d => d[0]), datasets: [{ label: 'Jumlah Kasus', data: sortedData.map(d => d[1]), backgroundColor: gradient, borderWidth: 0, borderRadius: { topLeft: 6, topRight: 6 }, barThickness: 20, }] }, options: this.utils.getChartOptions() });
     },
 
     renderTopStudentsList() {
         const container = this.dom.containers.topStudents;
         const students = this.state.analytics.topStudents;
-
         if (students.length === 0) {
             container.innerHTML = `<p class="text-sm text-secondary text-center py-8">Belum ada data siswa.</p>`;
             return;
         }
-        
         container.innerHTML = students.map((student, index) => {
             const rank = index + 1;
             let rankClass = 'rank-other';
-            if (rank === 1) rankClass = 'rank-1';
-            if (rank === 2) rankClass = 'rank-2';
-            if (rank === 3) rankClass = 'rank-3';
-
-            return `
-                <div class="flex items-center gap-4 rank-item">
-                    <div class="rank-icon ${rankClass}">${rank}</div>
-                    <div class="flex-1">
-                        <p class="font-semibold text-primary truncate">${student.item}</p>
-                        <p class="text-sm text-secondary">${student.count} kali terlambat</p>
-                    </div>
-                    <div class="font-bold text-lg text-primary">${student.count}</div>
-                </div>
-            `;
+            if (rank === 1) rankClass = 'rank-1'; if (rank === 2) rankClass = 'rank-2'; if (rank === 3) rankClass = 'rank-3';
+            return `<div class="flex items-center gap-4 rank-item"><div class="rank-icon ${rankClass}">${rank}</div><div class="flex-1"><p class="font-semibold text-primary truncate">${student.item}</p><p class="text-sm text-secondary">${student.count} kali terlambat</p></div><div class="font-bold text-lg text-primary">${student.count}</div></div>`;
         }).join('');
     },
 
@@ -506,29 +556,120 @@ const app = {
         gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
         const data = this.state.analytics.trendData;
+        this.charts.trendChart = new Chart(ctx, { type: 'line', data: { labels: data.labels, datasets: [{ label: 'Jumlah Keterlambatan', data: data.counts, fill: true, backgroundColor: gradient, borderColor: '#10b981', borderWidth: 2, pointBackgroundColor: '#10b981', pointBorderColor: '#ffffff', pointHoverBackgroundColor: '#ffffff', pointHoverBorderColor: '#10b981', pointRadius: 4, pointBorderWidth: 2, tension: 0.4, }] }, options: this.utils.getChartOptions() });
+    },
+    
+    handleHabitualDetection() {
+        const minCount = parseInt(this.dom.inputs.habitualMinCount.value) || 0;
+        const start = this.dom.inputs.habitualStartDate.value ? new Date(this.dom.inputs.habitualStartDate.value) : null;
+        const end = this.dom.inputs.habitualEndDate.value ? new Date(this.dom.inputs.habitualEndDate.value) : null;
         
-        this.charts.trendChart = new Chart(ctx, { 
-            type: 'line', 
-            data: { 
-                labels: data.labels, 
-                datasets: [{ 
-                    label: 'Jumlah Keterlambatan', 
-                    data: data.counts,
-                    fill: true,
-                    backgroundColor: gradient,
-                    borderColor: '#10b981',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: '#ffffff',
-                    pointHoverBackgroundColor: '#ffffff',
-                    pointHoverBorderColor: '#10b981',
-                    pointRadius: 4,
-                    pointBorderWidth: 2,
-                    tension: 0.4, // Membuat garis melengkung
-                }] 
-            }, 
-            options: this.utils.getChartOptions() 
+        if(start) start.setHours(0,0,0,0);
+        if(end) end.setHours(23,59,59,999);
+
+        // 1. Filter all records by the selected date range.
+        const filteredByDate = this.state.data.all.filter(row => {
+            const rowDate = this.utils.parseDate(row.tanggal);
+            if (!rowDate) return false;
+            return (!start || rowDate >= start) && (!end || rowDate <= end);
         });
+
+        // 2. Count occurrences for each student.
+        const counts = filteredByDate.reduce((acc, row) => {
+            const studentName = row.nama.trim(); // Use trimmed name for accuracy
+            if (!acc[studentName]) {
+                acc[studentName] = { count: 0, kelas: row.kelas };
+            }
+            acc[studentName].count++;
+            return acc;
+        }, {});
+        
+        // 3. Get the names of students who meet the minCount criteria.
+        const habitualOffenderNames = Object.keys(counts).filter(name => counts[name].count > minCount);
+
+        // 4. Create the final results list with individual records for the offenders.
+        const detailedResults = filteredByDate
+            .filter(row => habitualOffenderNames.includes(row.nama.trim()))
+            .map(row => ({
+                ...row, // a single late record, contains 'nama', 'kelas', 'tanggal', etc.
+                totalCount: counts[row.nama.trim()].count // add the total count for that student
+            }));
+
+        // 5. Sort the results to group by student, then by date
+        detailedResults.sort((a, b) => {
+            if (a.nama < b.nama) return -1;
+            if (a.nama > b.nama) return 1;
+            const dateA = this.utils.parseDate(a.tanggal);
+            const dateB = this.utils.parseDate(b.tanggal);
+            return dateA && dateB ? dateA - dateB : 0;
+        });
+
+        this.state.habitualResults = detailedResults;
+        this.renderHabitualTable();
+    },
+
+    renderHabitualTable() {
+        const container = this.dom.containers.habitualTableBody;
+        const results = this.state.habitualResults;
+
+        if (results.length === 0) {
+            container.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
+            return;
+        }
+
+        container.innerHTML = results.map(record => `
+            <tr class="border-b transition-colors" style="border-color: var(--border-color);">
+                <td class="px-4 py-3 font-semibold">${record.nama}</td>
+                <td class="px-4 py-3">${record.kelas}</td>
+                <td class="px-4 py-3">${record.tanggal}</td>
+                <td class="px-4 py-3 text-center font-bold text-lg">${record.totalCount}</td>
+            </tr>
+        `).join('');
+    },
+    
+    showHabitualDownloadModal() {
+        if (this.state.habitualResults.length === 0) {
+            this.showToast('Tidak ada data untuk diunduh.', 3000);
+            return;
+        }
+        const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        this.dom.inputs.habitualPdfTitle.value = `Laporan Pelanggar Berulang - ${today}`;
+        this.dom.habitualDownloadModal.classList.remove('hidden');
+    },
+
+    handleHabitualPdfDownload() {
+        const customTitle = this.dom.inputs.habitualPdfTitle.value.trim();
+        if (!customTitle) {
+            this.showToast('Judul laporan tidak boleh kosong.', 3000);
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text(customTitle, 14, 22);
+        
+        const head = [['Nama Siswa', 'Kelas', 'Tanggal Terlambat', 'Total Keterlambatan Siswa']];
+        const body = this.state.habitualResults.map(record => [record.nama, record.kelas, record.tanggal, record.totalCount]);
+        
+        doc.autoTable({ 
+            head, 
+            body, 
+            startY: 30, 
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            styles: { halign: 'center' },
+            columnStyles: { 
+                0: { halign: 'left' }, 
+                1: { halign: 'left' },
+                2: { halign: 'left' }
+            }
+        });
+
+        doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
+        this.showToast('Laporan PDF sedang dibuat...', 2000);
+        this.dom.habitualDownloadModal.classList.add('hidden');
     },
 
     renderFilters() {
@@ -570,6 +711,10 @@ const app = {
         this.dom.buttons.downloadFiltered.addEventListener('click', () => this.showDownloadModal());
         this.dom.buttons.cancelDownload.addEventListener('click', () => this.toggleDownloadModal(false));
         this.dom.buttons.confirmDownload.addEventListener('click', () => this.handlePdfDownload());
+        this.dom.buttons.habitualApply.addEventListener('click', () => this.handleHabitualDetection());
+        this.dom.buttons.habitualDownload.addEventListener('click', () => this.showHabitualDownloadModal());
+        this.dom.buttons.confirmHabitualDownload.addEventListener('click', () => this.handleHabitualPdfDownload());
+        this.dom.buttons.cancelHabitualDownload.addEventListener('click', () => this.dom.habitualDownloadModal.classList.add('hidden'));
         Object.values(this.dom.inputs).filter(el => typeof el === 'object' && el.id?.startsWith('filter')).forEach(el => el.addEventListener('input', () => this.applyFilters()));
     },
 
@@ -582,6 +727,7 @@ const app = {
 
         const pageTitles = {
             dashboard: 'Ringkasan Analitik',
+            habitual_detector: 'Deteksi Pelanggar Berulang',
             data_explorer: 'Penjelajah Data',
             ai_analyst: 'Asisten AI'
         };
@@ -606,7 +752,7 @@ const app = {
         this.utils.createIcons();
         if(!this.state.isLoading) {
             this.renderClassChart();
-            this.renderTrendChart(); // Ditambahkan
+            this.renderTrendChart();
         }
     },
 
@@ -755,11 +901,24 @@ const app = {
             const parts = s.split('/');
             if (parts.length !== 3) return null;
             const [d, m, y] = parts.map(p => parseInt(p, 10));
+            // Check for valid date parts
+            if (isNaN(d) || isNaN(m) || isNaN(y) || y < 1000) return null;
             return new Date(y, m - 1, d);
         },
         getTopItems(data, key) {
             const counts = data.reduce((acc, row) => { acc[row[key]] = (acc[row[key]] || 0) + 1; return acc; }, {});
             return Object.entries(counts).map(([item, count]) => ({item, count})).sort((a,b) => b.count - a.count);
+        },
+        setDefaultDates() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - 29); // Set start date to 30 days ago
+
+            // Format to YYYY-MM-DD for the input[type=date]
+            const formatDate = (date) => date.toISOString().split('T')[0];
+
+            app.dom.inputs.habitualEndDate.value = formatDate(endDate);
+            app.dom.inputs.habitualStartDate.value = formatDate(startDate);
         },
         getChartOptions() {
             const isDark = app.state.theme === 'dark';
