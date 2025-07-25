@@ -23,6 +23,6 @@ jobs:
           personal_token: ${{ secrets.ACCESS_TOKEN }}
           external_repository: Admin-Dekstop/Hosting-TanyaData  # Ganti sesuai user/repo publikmu
           publish_branch: gh-pages  # Pastikan repo publik aktifkan GitHub Pages dari branch ini
-          publish_dir: ./dist  # Ganti ke './' kalau file HTML ada di root
+          publish_dir: ./ # Ganti ke './' kalau file HTML ada di root
           force_orphan: true
           commit_message: "🚀 Deploy from private repo"
