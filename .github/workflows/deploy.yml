@@ -19,6 +19,6 @@ jobs:
           personal_token: ${{ secrets.ACCESS_TOKEN }}
           external_repository: Admin-Dekstop/Hosting-TanyaData
           publish_branch: gh-pages
-          publish_dir: ./  # Ganti sesuai folder file kamu
+          publish_dir: ./dist # Ganti sesuai folder file kamu
           force_orphan: true
           commit_message: "🚀 Deploy from private repo"
