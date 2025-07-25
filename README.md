@@ -1,3 +1,1 @@
-api key google shet - AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY
-Id -1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc
-Gemini -AIzaSyDUIijYUqNa7zrQ_m3sC44-fopxuIs7eOA
+
