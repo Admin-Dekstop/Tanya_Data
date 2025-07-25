@@ -204,7 +204,8 @@
                                     <tr>
                                         <th class="px-4 py-3">Nama Siswa</th>
                                         <th class="px-4 py-3">Kelas</th>
-                                        <th class="px-4 py-3 text-center">Jumlah Keterlambatan</th>
+                                        <th class="px-4 py-3">Tanggal Terlambat</th>
+                                        <th class="px-4 py-3 text-center">Total Keterlambatan</th>
                                     </tr>
                                 </thead>
                                 <tbody id="habitual-table-body">
@@ -510,7 +511,7 @@ const app = {
             skeletonList += `<div class="flex items-center gap-4 animate-pulse"><div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700"></div><div class="flex-1"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div></div>`;
         }
         this.dom.containers.topStudents.innerHTML = skeletonList;
-        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
+        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
     },
 
     renderClassChart() {
@@ -570,13 +571,12 @@ const app = {
         const filteredByDate = this.state.data.all.filter(row => {
             const rowDate = this.utils.parseDate(row.tanggal);
             if (!rowDate) return false;
-            const dateMatch = (!start || rowDate >= start) && (!end || rowDate <= end);
-            return dateMatch;
+            return (!start || rowDate >= start) && (!end || rowDate <= end);
         });
 
-        // 2. Count occurrences for each student within the filtered date range.
+        // 2. Count occurrences for each student.
         const counts = filteredByDate.reduce((acc, row) => {
-            const studentName = row.nama;
+            const studentName = row.nama.trim(); // Use trimmed name for accuracy
             if (!acc[studentName]) {
                 acc[studentName] = { count: 0, kelas: row.kelas };
             }
@@ -584,18 +584,27 @@ const app = {
             return acc;
         }, {});
         
-        // 3. Create the final results array from the counts object.
-        this.state.habitualResults = Object.entries(counts)
-            .map(([nama, data]) => ({
-                nama: nama,
-                kelas: data.kelas,
-                count: data.count
-            }))
-            // 4. Filter this summary by the minimum count.
-            .filter(student => student.count > minCount) 
-            // 5. Sort the results by count descending.
-            .sort((a, b) => b.count - a.count);
+        // 3. Get the names of students who meet the minCount criteria.
+        const habitualOffenderNames = Object.keys(counts).filter(name => counts[name].count > minCount);
 
+        // 4. Create the final results list with individual records for the offenders.
+        const detailedResults = filteredByDate
+            .filter(row => habitualOffenderNames.includes(row.nama.trim()))
+            .map(row => ({
+                ...row, // a single late record, contains 'nama', 'kelas', 'tanggal', etc.
+                totalCount: counts[row.nama.trim()].count // add the total count for that student
+            }));
+
+        // 5. Sort the results to group by student, then by date
+        detailedResults.sort((a, b) => {
+            if (a.nama < b.nama) return -1;
+            if (a.nama > b.nama) return 1;
+            const dateA = this.utils.parseDate(a.tanggal);
+            const dateB = this.utils.parseDate(b.tanggal);
+            return dateA && dateB ? dateA - dateB : 0;
+        });
+
+        this.state.habitualResults = detailedResults;
         this.renderHabitualTable();
     },
 
@@ -604,15 +613,16 @@ const app = {
         const results = this.state.habitualResults;
 
         if (results.length === 0) {
-            container.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
+            container.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
             return;
         }
 
-        container.innerHTML = results.map(student => `
+        container.innerHTML = results.map(record => `
             <tr class="border-b transition-colors" style="border-color: var(--border-color);">
-                <td class="px-4 py-3 font-semibold">${student.nama}</td>
-                <td class="px-4 py-3">${student.kelas}</td>
-                <td class="px-4 py-3 text-center font-bold text-lg">${student.count}</td>
+                <td class="px-4 py-3 font-semibold">${record.nama}</td>
+                <td class="px-4 py-3">${record.kelas}</td>
+                <td class="px-4 py-3">${record.tanggal}</td>
+                <td class="px-4 py-3 text-center font-bold text-lg">${record.totalCount}</td>
             </tr>
         `).join('');
     },
@@ -640,8 +650,8 @@ const app = {
         doc.setFontSize(18);
         doc.text(customTitle, 14, 22);
         
-        const head = [['Nama Siswa', 'Kelas', 'Jumlah Keterlambatan']];
-        const body = this.state.habitualResults.map(student => [student.nama, student.kelas, student.count]);
+        const head = [['Nama Siswa', 'Kelas', 'Tanggal Terlambat', 'Total Keterlambatan Siswa']];
+        const body = this.state.habitualResults.map(record => [record.nama, record.kelas, record.tanggal, record.totalCount]);
         
         doc.autoTable({ 
             head, 
@@ -652,7 +662,8 @@ const app = {
             styles: { halign: 'center' },
             columnStyles: { 
                 0: { halign: 'left' }, 
-                1: { halign: 'left' } 
+                1: { halign: 'left' },
+                2: { halign: 'left' }
             }
         });
 
