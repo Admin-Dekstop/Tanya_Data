@@ -172,7 +172,7 @@
                 <!-- Habitual Detector Page -->
                 <div id="page-habitual_detector" class="page-content hidden">
                     <div class="card p-4 md:p-6 rounded-2xl">
-                        <h3 class="font-bold text-lg md:text-xl mb-4">Deteksi Pelanggar Berulang</h3>
+                        <h3 class="font-bold text-lg md:text-xl mb-4"> Deteksi Pelanggar Berulang</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
                             <div>
                                 <label for="habitual-min-count" class="text-sm font-medium text-secondary">Terlambat Lebih Dari</label>
@@ -202,9 +202,10 @@
                             <table class="w-full text-sm text-left" id="habitual-table">
                                 <thead class="text-xs uppercase" style="background-color: var(--bg-secondary);">
                                     <tr>
-                                        <th class="px-4 py-3 w-16">Peringkat</th>
                                         <th class="px-4 py-3">Nama Siswa</th>
-                                        <th class="px-4 py-3 text-center">Jumlah Keterlambatan</th>
+                                        <th class="px-4 py-3">Kelas</th>
+                                        <th class="px-4 py-3">Tanggal</th>
+                                        <th class="px-4 py-3">Keterangan</th>
                                     </tr>
                                 </thead>
                                 <tbody id="habitual-table-body">
@@ -241,7 +242,7 @@
                                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Filter
                             </button>
                             <button id="download-filtered-btn" class="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all shadow-md">
-                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Laporan
+                                <i data-lucide="download" class="w-4 h-4"></i> Unduh Data
                             </button>
                         </div>
                         <div class="overflow-x-auto">
@@ -298,6 +299,7 @@
         </a>
     </nav>
     
+    <!-- Modal untuk Unduh Laporan Umum -->
     <div id="download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
         <div class="card rounded-2xl w-full max-w-md shadow-2xl">
             <div class="p-6 border-b" style="border-color: var(--border-color);">
@@ -315,14 +317,32 @@
         </div>
     </div>
 
+    <!-- Modal untuk Unduh Laporan Pelanggar Berulang -->
+    <div id="habitual-download-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="card rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="p-6 border-b" style="border-color: var(--border-color);">
+                <h2 class="text-xl font-bold">Unduh Data Pelanggar </h2>
+            </div>
+            <div class="p-6">
+                <label for="habitual-pdf-title-input" class="text-sm font-medium text-secondary">Judul Kop Laporan</label>
+                <input type="text" id="habitual-pdf-title-input" class="mt-1 p-2 border rounded-lg bg-transparent w-full" style="border-color: var(--border-color);">
+                <p class="text-xs text-secondary mt-2">Judul ini akan muncul di bagian atas dokumen PDF Anda.</p>
+            </div>
+            <div class="p-4 flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-b-2xl">
+                <button id="cancel-habitual-download-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-all">Batal</button>
+                <button id="confirm-habitual-download-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all">Konfirmasi & Unduh</button>
+            </div>
+        </div>
+    </div>
+
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
     <div id="toast" class="fixed bottom-5 left-1/2 py-3 px-6 bg-slate-900 text-white rounded-full shadow-lg transition-transform duration-500 text-sm font-medium"><p id="toast-message"></p></div>
 
 <script>
 // --- SCRIPT START --- //
 
-const GOOGLE_SHEETS_API_KEY = 'AIzaSyCCjeeWBHSGGIMVmtSaUadLioZGL19f_VY';
-const SPREADSHEET_ID = '1kof1L9-mCbZiYKINeSXxk_zoBNDQkDlPW5zu-VwbiEc';
+const GOOGLE_SHEETS_API_KEY = 'GANTI_DENGAN_API_KEY_GOOGLE_SHEETS_ANDA';
+const SPREADSHEET_ID = 'GANTI_DENGAN_ID_SPREADSHEET_ANDA';
 const GEMINI_API_KEY = 'GANTI_DENGAN_API_KEY_GEMINI_ANDA';
 
 const app = {
@@ -364,6 +384,7 @@ const app = {
             habitualMinCount: document.getElementById('habitual-min-count'),
             habitualStartDate: document.getElementById('habitual-start-date'),
             habitualEndDate: document.getElementById('habitual-end-date'),
+            habitualPdfTitle: document.getElementById('habitual-pdf-title-input'),
         },
         buttons: {
             sendChat: document.getElementById('send-button'),
@@ -373,14 +394,18 @@ const app = {
             cancelDownload: document.getElementById('cancel-download-btn'),
             habitualApply: document.getElementById('habitual-apply-btn'),
             habitualDownload: document.getElementById('habitual-download-btn'),
+            confirmHabitualDownload: document.getElementById('confirm-habitual-download-btn'),
+            cancelHabitualDownload: document.getElementById('cancel-habitual-download-btn'),
         },
         downloadModal: document.getElementById('download-modal'),
+        habitualDownloadModal: document.getElementById('habitual-download-modal'),
         toast: { el: document.getElementById('toast'), msg: document.getElementById('toast-message') },
     },
     charts: { byClass: null, trendChart: null },
     
     init() {
-        this.switchPage = this.switchPage.bind(this); // FIX: Bind the context of switchPage
+        this.switchPage = this.switchPage.bind(this);
+        this.toggleSidebar = this.toggleSidebar.bind(this);
         this.loadTheme();
         this.setupEventListeners();
         
@@ -415,7 +440,7 @@ const app = {
 
             this.state.data.filtered = [...this.state.data.all];
             this.renderAll();
-            this.handleHabitualDetection(); // Jalankan deteksi awal saat data dimuat
+            this.handleHabitualDetection();
             this.showToast('Data berhasil dimuat!', 2000);
         } catch (error) {
             this.showToast(`Gagal memuat data: ${error.message}`, 5000);
@@ -477,7 +502,7 @@ const app = {
             skeletonList += `<div class="flex items-center gap-4 animate-pulse"><div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700"></div><div class="flex-1"><div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div><div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div></div></div>`;
         }
         this.dom.containers.topStudents.innerHTML = skeletonList;
-        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
+        this.dom.containers.habitualTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto animate-pulse"></div></td></tr>`;
     },
 
     renderClassChart() {
@@ -543,10 +568,15 @@ const app = {
             return acc;
         }, {});
         
-        this.state.habitualResults = Object.entries(counts)
-            .map(([name, count]) => ({ name, count }))
-            .filter(student => student.count > minCount)
-            .sort((a, b) => b.count - a.count);
+        const offenders = Object.keys(counts).filter(name => counts[name] > minCount);
+
+        this.state.habitualResults = filteredByDate
+            .filter(row => offenders.includes(row.nama))
+            .sort((a, b) => {
+                if (a.nama < b.nama) return -1;
+                if (a.nama > b.nama) return 1;
+                return this.utils.parseDate(a.tanggal) - this.utils.parseDate(b.tanggal);
+            });
 
         this.renderHabitualTable();
     },
@@ -556,42 +586,50 @@ const app = {
         const results = this.state.habitualResults;
 
         if (results.length === 0) {
-            container.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
+            container.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-secondary">Tidak ada siswa yang memenuhi kriteria filter.</td></tr>`;
             return;
         }
 
-        container.innerHTML = results.map((student, index) => `
+        container.innerHTML = results.map(row => `
             <tr class="border-b transition-colors" style="border-color: var(--border-color);">
-                <td class="px-4 py-3 text-center font-medium">${index + 1}</td>
-                <td class="px-4 py-3 font-semibold">${student.name}</td>
-                <td class="px-4 py-3 text-center text-lg font-bold text-red-500">${student.count}</td>
+                <td class="px-4 py-3 font-semibold">${row.nama}</td>
+                <td class="px-4 py-3">${row.kelas}</td>
+                <td class="px-4 py-3">${row.tanggal}</td>
+                <td class="px-4 py-3">${row.keterangan}</td>
             </tr>
         `).join('');
     },
     
-    handleHabitualPdfDownload() {
+    showHabitualDownloadModal() {
         if (this.state.habitualResults.length === 0) {
             this.showToast('Tidak ada data untuk diunduh.', 3000);
+            return;
+        }
+        const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+        this.dom.inputs.habitualPdfTitle.value = `Laporan Pelanggar Berulang - ${today}`;
+        this.dom.habitualDownloadModal.classList.remove('hidden');
+    },
+
+    handleHabitualPdfDownload() {
+        const customTitle = this.dom.inputs.habitualPdfTitle.value.trim();
+        if (!customTitle) {
+            this.showToast('Judul laporan tidak boleh kosong.', 3000);
             return;
         }
         
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const minCount = this.dom.inputs.habitualMinCount.value;
-        const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
         doc.setFontSize(18);
-        doc.text(`Laporan Pelanggar Berulang`, 14, 22);
-        doc.setFontSize(11);
-        doc.setTextColor(100);
-        doc.text(`Siswa yang terlambat lebih dari ${minCount} kali - Dibuat pada ${today}`, 14, 28);
+        doc.text(customTitle, 14, 22);
         
-        const head = [['Peringkat', 'Nama Siswa', 'Jumlah Keterlambatan']];
-        const body = this.state.habitualResults.map((s, i) => [i + 1, s.name, s.count]);
+        const head = [['Nama Siswa', 'Kelas', 'Tanggal', 'Keterangan']];
+        const body = this.state.habitualResults.map(row => [row.nama, row.kelas, row.tanggal, row.keterangan]);
         
-        doc.autoTable({ head, body, startY: 35, theme: 'grid' });
-        doc.save(`Laporan_Pelanggar_Berulang_${today.replace(/ /g, '_')}.pdf`);
+        doc.autoTable({ head, body, startY: 30, theme: 'grid' });
+        doc.save(`${customTitle.replace(/ /g, '_')}.pdf`);
         this.showToast('Laporan PDF sedang dibuat...', 2000);
+        this.dom.habitualDownloadModal.classList.add('hidden');
     },
 
     renderFilters() {
@@ -634,7 +672,9 @@ const app = {
         this.dom.buttons.cancelDownload.addEventListener('click', () => this.toggleDownloadModal(false));
         this.dom.buttons.confirmDownload.addEventListener('click', () => this.handlePdfDownload());
         this.dom.buttons.habitualApply.addEventListener('click', () => this.handleHabitualDetection());
-        this.dom.buttons.habitualDownload.addEventListener('click', () => this.handleHabitualPdfDownload());
+        this.dom.buttons.habitualDownload.addEventListener('click', () => this.showHabitualDownloadModal());
+        this.dom.buttons.confirmHabitualDownload.addEventListener('click', () => this.handleHabitualPdfDownload());
+        this.dom.buttons.cancelHabitualDownload.addEventListener('click', () => this.dom.habitualDownloadModal.classList.add('hidden'));
         Object.values(this.dom.inputs).filter(el => typeof el === 'object' && el.id?.startsWith('filter')).forEach(el => el.addEventListener('input', () => this.applyFilters()));
     },
 
